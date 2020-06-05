@@ -16,4 +16,4 @@
 # load plink
 module load igmm/apps/plink/1.90b4
 
-plink --bfile data/sheep_geno_imputed_oar31_17052020 --sheep --out data/sheep_geno_trans --recode --transpose --exclude data/oar_imp_low_call_snps095.txt
+plink --bfile data/sheep_geno_imputed_oar31_17052020 --sheep --out data/sheep_geno_filt --recode --remove data/low_call_rate_inds.txt --transpose 
