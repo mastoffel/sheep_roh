@@ -21,10 +21,10 @@ system(paste0("/usr/local/bin/plink --bfile ../sheep/data/SNP_chip/oar31_mapping
 data.frame(1:26, 1, 2) %>% write_delim("data/dummy_cent", col_names = FALSE)
 
 system(paste0("/usr/local/bin/garlic-master/bin/osx/garlic --tped data/sheep_geno.tped ",
-              "--tfam data/sheep_geno.tfam --centromere data/dummy_cent ",
-              "--error 0.005 --winsize-multi 10 20 30 40 50 60 70 80 90 100 110 120 130 140 150 160 170 --out output/ROH_garlic/test"))
+              "--tfam data/sheep_geno.tfam --centromere data/dummy_cent --kde-subsample -1 ",
+              "--error 0.005 --winsize-multi 10 20 30 40 50 60 70 80 90 100 110 120 130 140 150 160 170 200 300 400 --out output/ROH_garlic/test"))
 
-all_kde <- purrr::map(c(seq(10, 170, 10)), function(x) {
+all_kde <- purrr::map(c(seq(10, 170, 10), 200, 300 ,400), function(x) {
       read_delim(paste0("output/ROH_garlic/test.", x, "SNPs.kde"), " ", col_names = FALSE)
       }) %>% 
       map(as.data.frame) %>% 
