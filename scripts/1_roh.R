@@ -184,6 +184,8 @@ prop_IBD_df_with_0 %>%
 
 quantile(roh$KB, probs = c(0.25,0.5,0.75))
 
+
+
 # define ROH length classes
 calc_froh_classes <- function(roh_crit, roh_lengths) {
    

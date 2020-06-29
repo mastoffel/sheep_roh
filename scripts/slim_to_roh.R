@@ -1,9 +1,9 @@
 library(data.table)
 library(tidyverse)
-system(paste0("/usr/local/bin/plink --vcf ../slim_sim/sheep.vcf --sheep --out output/roh ",
+system(paste0("/usr/local/bin/plink --vcf slim_sim/sheep_recap.vcf --sheep --out output/roh ",
               # "--keep output/ROH/ids_surv.txt ",
-              "--homozyg --homozyg-window-snp 20 --homozyg-snp 20 --homozyg-kb 600 ",
-              "--homozyg-gap 300 --homozyg-density 100 --homozyg-window-missing 0 ",
+              "--homozyg --homozyg-window-snp 20 --homozyg-snp 20 --homozyg-kb 700 ",
+              "--homozyg-gap 100 --homozyg-density 100 --homozyg-window-missing 0 ",
               "--homozyg-het 0 ",
               "--homozyg-window-het 0"))
 
@@ -18,7 +18,7 @@ froh <- roh %>%
 hist(froh$froh, breaks = 100) 
 
 # load mutations
-del_muts <- read_delim("../slim_sim/mut.txt", " ") %>% 
+del_muts <- read_delim("slim_sim/mut.txt", " ") %>% 
                   filter(s < 0)
 
 count_del <- function(ind) {

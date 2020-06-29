@@ -22,18 +22,22 @@ data.frame(1:26, 1, 2) %>% write_delim("data/dummy_cent", col_names = FALSE)
 
 system(paste0("/usr/local/bin/garlic-master/bin/osx/garlic --tped data/sheep_geno.tped ",
               "--tfam data/sheep_geno.tfam --centromere data/dummy_cent --kde-subsample -1 ",
-              "--error 0.005 --winsize-multi 10 20 30 40 50 60 70 80 90 100 110 120 130 140 150 160 170 200 300 400 --out output/ROH_garlic/test"))
+              "--error 0.005 --winsize-multi 10 20 30 40 50 60 70 80 90 100 110 120 130 140 150 200 300 400 500 --out output/ROH_garlic/test"))
 
-all_kde <- purrr::map(c(seq(10, 170, 10), 200, 300 ,400), function(x) {
+all_kde <- purrr::map(c(seq(10, 150, 10), 200, 300 ,400, 500), function(x) {
       read_delim(paste0("output/ROH_garlic/test.", x, "SNPs.kde"), " ", col_names = FALSE)
       }) %>% 
       map(as.data.frame) %>% 
       bind_rows(.id = "winsize") %>% 
+      mutate(winsize_snps = rep(c(seq(10, 150, 10), 200, 300 ,400, 500), each = 512)) %>% 
       as_tibble()
             
 ggplot(all_kde, aes(X1, X2)) +
       geom_point() +
-      facet_wrap(~winsize, scales = "free")
+      xlab("LOD score") +
+      ylab("Density") +
+      facet_wrap(~winsize_snps, scales = "free") +
+      ggtitle("LOD-Score distributions for window sizes 10-500")
 
 # lets choose window size of 60 SNPs
 system(paste0("/usr/local/bin/garlic-master/bin/osx/garlic --tped data/sheep_geno.tped ",

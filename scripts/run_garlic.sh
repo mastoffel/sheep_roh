@@ -10,4 +10,4 @@
 #$ -e e_files/
 
 
-/exports/csce/eddie/biology/groups/pemberton/martin/utils/bin/garlic/bin/linux/garlic --tped data/sheep_geno_trans.tped --tfam data/sheep_geno_trans.tfam --centromere data/dummy_cent --error 0.005 --winsize 100 --overlap-frac 0.5 --out output/roh 
+/exports/csce/eddie/biology/groups/pemberton/martin/utils/bin/garlic/bin/linux/garlic --tped data/sheep_geno_filt.tped --tfam data/sheep_geno_filt.tfam --centromere data/dummy_cent --error 0.005 --winsize 100 --overlap-frac 0.5 --out output/roh 

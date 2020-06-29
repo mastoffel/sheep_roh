@@ -38,37 +38,50 @@ roh <- roh_garlic %>%
       fill(ids, .direction = "down") %>% 
       mutate(KB = as.numeric(roh_length)/1000)
 
+ggplot(roh, aes(KB)) +
+   geom_histogram(bins = 100) +
+   scale_x_continuous(limits = c(1, 5000))
+   #facet_wrap(~size_class, scales = "free_x")
+
 # froh by size class
 froh <- roh %>% 
             group_by(ids, size_class) %>% 
             summarise(sum_KB = sum(KB)) %>% 
             mutate(froh = sum_KB/autosomal_genome_size) %>% 
             pivot_wider(id_cols = ids, names_from = size_class, values_from = froh) %>% 
-            rename(froh_shortg = A, froh_mediumg = B, froh_longg = C)
+            #dplyr::rename(froh_shortg = A, froh_longg = B)
+            dplyr::rename(froh_shortg = A, froh_mediumg = B, froh_longg = C)
 
 froh_all <- roh %>% 
                   group_by(ids) %>% 
                   summarise(sum_KB = sum(KB)) %>% 
-                  mutate(frohg = sum_KB/autosomal_genome_size)
+                  mutate(froh_allg = sum_KB/autosomal_genome_size)
 
 froh_full <- froh_all %>% 
                   left_join(froh) %>% 
                   rename(id = ids) %>% 
                   mutate(id = as.factor(id))
 
+cor(froh_full$froh_shortg, froh_full$froh_longg)
+hist(froh_full$froh_longg)
 
 load("../sheep_ID/data/survival_mods_data.RData")
 
-rohs <- fitness_data %>% 
+froh_complete <- fitness_data %>% 
       filter_at(vars(survival, froh_all, birth_year, sheep_year), ~ !is.na(.)) %>% 
       select(id, contains("froh")) %>% 
       group_by(id) %>% 
       summarise(across(.cols = contains("froh"), mean, na.rm = TRUE)) %>% 
       left_join(froh_full) 
 
-kde <- read_delim("output/ROH_garlic/roh.200SNPs.kde", " ", col_names = F) %>% 
+kde <- read_delim("output/ROH_garlic/roh.100SNPs.kde", " ", col_names = F) %>% 
       plot()
 
-plot(rohs$froh_short, rohs$froh_shortg)
-mean(rohs$froh_all)
-mean(rohs$frohg)
+hist(as.numeric(roh$roh_length)/1000)
+
+# make dataset for modeling
+fitroh_data <- fitness_data %>% 
+                  left_join(froh_full %>% mutate(id = as.character(id)))
+
+save(fitroh_data, file = "data/fitroh_data.RData")
+write_delim(roh, "output/ROH_garlic/roh_df.txt")

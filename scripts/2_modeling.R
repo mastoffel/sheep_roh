@@ -4,29 +4,20 @@ library(lme4)
 load("data/survival_mods_data.RData") 
 load("data/sheep_ped.RData")
 ped <- sheep_ped
+load("data/fitroh_data.RData")
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~Annual survival~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 # survival data preprocessing
-juv_survival <- fitness_data %>% 
-      # filter na rows
-      #filter_at(vars(survival, froh_all, birth_year, sheep_year, mum_id), ~ !is.na(.)) %>% 
-      filter_at(vars(survival, froh_all, sheep_year, birth_year, mum_id), ~ !is.na(.)) %>% 
+juv_survival <- fitroh_data %>% 
+      filter_at(vars(survival, froh_allg, sheep_year, birth_year, mum_id), ~ !is.na(.)) %>% 
       mutate(age_std = as.numeric(scale(age)),
              age_std2 = age_std^2,
-             froh_all_cent =    froh_all - mean(froh_all, na.rm = TRUE),
-             froh_short_cent =  froh_short - mean(froh_short, na.rm = TRUE),
-             froh_medium_cent = froh_medium - mean(froh_medium, na.rm = TRUE),
-             froh_long_cent =   froh_long - mean(froh_long, na.rm = TRUE),
-             froh_all_std = as.numeric(scale(froh_all)),
-             froh_shorter_cent = (froh_short + froh_medium) - mean((froh_short + froh_medium)),
-             froh_short_std = as.numeric(scale(froh_short)),
-             froh_medium_std = as.numeric(scale(froh_medium)),
-             froh_long_std = as.numeric(scale(froh_long)),
+             froh_all_cent =    froh_allg - mean(froh_all, na.rm = TRUE),
+             froh_short_cent =  froh_shortg - mean(froh_short, na.rm = TRUE),
+             froh_medium_cent = froh_mediumg - mean(froh_medium, na.rm = TRUE),
+             froh_long_cent =   froh_longg - mean(froh_long, na.rm = TRUE),
              lamb = as.factor(ifelse(age == 0, 1, 0))) %>% 
       filter(age == 0)
 
-cor(juv_survival$hom, juv_survival$froh_all)
-sd(juv_survival$hom) 
-sd(juv_survival$froh_all)
 # lme4 -------------------------------------------------------------------------
 # time saver function for modeling
 nlopt <- function(par, fn, lower, upper, control) {
@@ -40,37 +31,25 @@ nlopt <- function(par, fn, lower, upper, control) {
       )
 }
 
-
-mod <- glmer(survival ~ froh_long_cent + froh_shorter_cent + twin + sex + (1|sheep_year) + (1|mum_id) + (1|birth_year), 
+mod <- glmer(survival ~ froh_all_cent + froh_short_cent + twin + sex + (1|sheep_year) + (1|mum_id) + (1|birth_year), 
              family = binomial, data = juv_survival,
              control = glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
 summary(mod)
 
-mod_std <- glmer(survival ~ froh_long_std + froh_medium_std + froh_short_std + twin + sex + (1|sheep_year) + (1|mum_id) + (1|birth_year), 
-             family = binomial, data = juv_survival,
-             control = glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
-summary(mod_std)
 
 
-ad_survival <- fitness_data %>% 
-      # filter na rows
-      #filter_at(vars(survival, froh_all, birth_year, sheep_year, mum_id), ~ !is.na(.)) %>% 
-      filter_at(vars(survival, froh_all, sheep_year, mum_id), ~ !is.na(.)) %>% 
-      mutate(age_std = as.numeric(scale(age)),
-             age_std2 = age_std^2,
-             froh_all_cent =    froh_all - mean(froh_all, na.rm = TRUE),
-             froh_short_cent =  froh_short - mean(froh_short, na.rm = TRUE),
-             froh_medium_cent = froh_medium - mean(froh_medium, na.rm = TRUE),
-             froh_long_cent =   froh_long - mean(froh_long, na.rm = TRUE),
-             froh_short2 = (froh_short + froh_medium) - mean(froh_short + froh_medium),
-             froh_all_std = as.numeric(scale(froh_all)),
-             froh_short_std = as.numeric(scale(froh_short)),
-             froh_medium_std = as.numeric(scale(froh_medium)),
-             froh_long_std = as.numeric(scale(froh_long)),
-             lamb = as.factor(ifelse(age == 0, 1, 0))) %>% 
+ad_survival <- fitroh_data %>% 
+   filter_at(vars(survival, froh_allg, sheep_year, birth_year, mum_id), ~ !is.na(.)) %>% 
+   mutate(age_std = as.numeric(scale(age)),
+          age_std2 = age_std^2,
+          froh_all_cent =    froh_allg - mean(froh_all, na.rm = TRUE),
+          froh_short_cent =  froh_shortg - mean(froh_short, na.rm = TRUE),
+          froh_medium_cent = froh_mediumg - mean(froh_medium, na.rm = TRUE),
+          froh_long_cent =   froh_longg - mean(froh_long, na.rm = TRUE),
+          lamb = as.factor(ifelse(age == 0, 1, 0))) %>% 
       filter(age > 0)
 
-mod_ad <- glmer(survival ~ froh_long_cent + froh_short2 + twin + sex + age_std + age_std2 + (1|id) + (1|sheep_year) + (1|mum_id) + (1|birth_year), 
+mod_ad <- glmer(survival ~ froh_all_cent + twin + sex + age_std + age_std2 + (1|id) + (1|sheep_year) + (1|mum_id) + (1|birth_year), 
              family = binomial, data = ad_survival,
              control = glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
 summary(mod_ad)
