@@ -4,8 +4,8 @@ initialize() {
 	initializeTreeSeq();
 	initializeMutationRate(1e-9);
 	
-	// m1 mutation type: neutral
-	initializeMutationType("m1", 0.1, "g", -0.03, 0.2);
+	// m1 mutation type: neutral -0.03
+	initializeMutationType("m1", 0.1, "g", -0.1, 0.2);
 	
 	// g1 genomic element type: uses m1 for all mutations
 	initializeGenomicElementType("g1", c(m1), c(1.0));

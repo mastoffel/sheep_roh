@@ -4,22 +4,19 @@ library(data.table)
 library(tidyverse)
 library(vcfR)
 
+# cutoff for short/long ROH in KB
+roh_cutoff <- 3000
+
 # use vcf output to call ROH
 system(paste0("/usr/local/bin/plink --vcf slim_sim/sheep_recap.vcf --sheep --out output/roh ",
               # "--keep output/ROH/ids_surv.txt ",
-              "--homozyg --homozyg-window-snp 30 --homozyg-snp 30 --homozyg-kb 600 ",
+              "--homozyg --homozyg-window-snp 20 --homozyg-snp 20 --homozyg-kb 1200 ",
               "--homozyg-gap 100 --homozyg-density 100 --homozyg-window-missing 0 ",
               "--homozyg-het 0 ",
               "--homozyg-window-het 0"))
 
-sheep_vcf <- read.vcfR("slim_sim/sheep.vcf")
-gt <- extract.gt(sheep_vcf, element = "GT", as.numeric = TRUE)
-gt
-chromoqc(sheep_vcf)
-summary(sheep_vcf@gt)
-
 file_path <- "output/roh.hom"
-roh <- fread(file_path)
+roh <- fread(file_path) %>% mutate(IID = str_replace(IID, "indv", ""))
 hist(roh$KB)
 
 froh <- roh %>% 
@@ -27,9 +24,6 @@ froh <- roh %>%
       summarise(froh = sum(KB)/100000) 
 hist(froh$froh, breaks = 100) 
 
-# load mutation details
-# del_muts <- read_delim("slim_sim/mut.txt", " ") %>% 
-#                rename(mut_id = id)
 
 # load mutations per individual
 muts <- read_delim("slim_sim/mutperind2.txt", " ") %>% 
@@ -38,7 +32,6 @@ muts <- read_delim("slim_sim/mutperind2.txt", " ") %>%
          rename(ind_id = pedigree_id)
 
 mut_in_roh <- function(ind) {
-   
    muts_ind <- muts %>% filter(ind_id == ind)
    roh_ind <- roh %>% filter(IID == ind)
    
@@ -55,16 +48,16 @@ muts$roh_kb <- map(unique(muts$ind_id), mut_in_roh) %>%
 
 muts <- muts %>% 
          mutate(roh_class = case_when(
-            roh_kb > 3000 ~ "long",
-            roh_kb < 3000 ~ "short",
+            roh_kb > roh_cutoff ~ "long",
+            roh_kb < roh_cutoff ~ "short",
             is.na(roh_kb) ~ "outside_roh"
          ) ) %>% 
         mutate(mut_in_roh = ifelse(is.na(roh_kb), FALSE, TRUE))
 
 roh_ind <- roh %>% 
    mutate(roh_class = case_when(
-      KB > 3000 ~ "long",
-      KB < 3000 ~ "short"
+      KB > roh_cutoff ~ "long",
+      KB < roh_cutoff ~ "short"
    )) %>% 
    group_by(IID, roh_class) %>% 
    summarise(sum_kb = sum(KB)) %>% 
@@ -81,6 +74,7 @@ mut_and_roh <- muts %>%
                       left_join(roh_ind) %>% 
                       group_by(ind_id, roh_class) %>% 
                       add_count(roh_class) %>% 
+                      mutate(s = ifelse(copies == 2, s, s * 0.1)) %>% 
                       summarise(sum_s = sum(s),
                                 mean_s = mean(s),
                                 var_s = var(s),
@@ -90,7 +84,9 @@ mut_and_roh <- muts %>%
                              num_mut_per_MB = (num_mut / roh_class_genome_cov) * 1000) %>% 
                       mutate(roh_class = factor(roh_class, levels = c("long", "short", "outside_roh")))
                              
-                             
+source("../sheep_ID/theme_simple.R")           
 ggplot(mut_and_roh, aes(roh_class, s_per_MB)) + 
    geom_boxplot() +
-   geom_jitter()
+  # scale_y_continuous(limits = c(-0.01, 0)) +
+  # geom_jitter(size = 2, alpha = 0.1) +
+   theme_simple()
