@@ -4,6 +4,7 @@ library(data.table)
 library(snpStats)
 library(GGally)
 library(gghalves)
+library(furrr)
 source("../sheep_ID/theme_simple.R")
 # Chr lengths
 chr_data <- read_delim("../sheep/data/sheep_genome/chromosome_info_oar31.txt", delim = "\t") %>% 
@@ -25,7 +26,14 @@ system(paste0("/usr/local/bin/plink --bfile ../sheep/data/SNP_chip/oar31_mapping
               "--homozyg --homozyg-window-snp 30 --homozyg-snp 30 --homozyg-kb 600 ",
               "--homozyg-gap 300 --homozyg-density 50 --homozyg-window-missing 2 ",
               "--homozyg-het 2 ",
-              "--homozyg-window-het 2"))
+              "--homozyg-window-het 1"))
+
+system(paste0("/usr/local/bin/plink --bfile ../sheep/data/SNP_chip/oar31_mapping/sheep_geno_imputed_oar31_17052020 ",
+              "--sheep --out output/ROH/roh ",
+              "--homozyg --homozyg-window-snp 50 --homozyg-snp 50 --homozyg-kb 1200 ",
+              "--homozyg-gap 300 --homozyg-density 50 --homozyg-window-missing 2 ",
+              "--homozyg-het 2 ",
+              "--homozyg-window-het 1"))
 
 file_path <- "output/ROH/roh.hom"
 roh <- fread(file_path)
@@ -33,70 +41,105 @@ range(roh$KB)
 hist(roh$KB, breaks = 1000)
 
 # # calculate homozygosity in the rest of the genome -----------------------------
-# sheep_plink_name <- "../../sheep/data/SNP_chip/ramb_mapping/sheep_geno_imputed_ram_01052020"
-# # read merged plink data
-# sheep_bed <- paste0(sheep_plink_name, ".bed")
-# sheep_bim <- paste0(sheep_plink_name, ".bim")
-# sheep_fam <- paste0(sheep_plink_name, ".fam")
-# #full_sample <- read.plink(sheep_bed, sheep_bim, sheep_fam)
-# #summary(full_sample$genotypes)
-# 
-# snp_names <- read_delim("../../sheep/data/SNP_chip/ramb_mapping/sheep_geno_imputed_ram_01052020.bim", "\t",
-#                          col_names = FALSE) %>% .$X2
-# snp_index <- 1:length(snp_names)
-# snps_df <- data.frame(SNP1 = snp_names, SNP1_index = snp_index, 
-#                       stringsAsFactors = FALSE)
-# 
-# # find SNPs in ROH for each individual
-# roh_snps <- roh %>% 
-#    #sample_frac(0.00001) %>% 
-#    left_join(snps_df, by = "SNP1") %>% 
-#    mutate(SNP2_index = SNP1_index + NSNP - 1) %>% 
-#    mutate(snp_indices = paste0(SNP1_index, ":", SNP2_index)) %>% 
-#    as_tibble() %>% 
-#    mutate(snp_indices_full = purrr::map(snp_indices, function(x) eval(parse(text = x)))) %>% 
-#    group_by(IID) %>% 
-#    summarise(snps_in_roh = list(unlist(c(snp_indices_full))))
-# 
-# 
-# double_check <- unlist(apply(roh_snps,1, function(x) length(x[2][[1]])))
-# hist(double_check)
-# 
-# # load genotypes
-# full_sample <- read.plink(sheep_bed, sheep_bim, sheep_fam)
-# sheep_geno <- full_sample$genotypes
-# sample_qc <- row.summary(sheep_geno) 
-# sample_qc <- sample_qc %>% as_tibble(rownames = "id")
-# 
-# #sheep_geno <- as(full_sample$genotypes, Class = "numeric")
-# # sheep_geno <- sheep_geno[rownames(full_sample$genotypes) %in% as.character(roh_snps$IID), ]
-# 
-# calc_hom <- function(id, sheep_geno, roh_snps) {
-#    id_index <- which(rownames(sheep_geno) == id)
-#    roh_snps_sub <- roh_snps[roh_snps$IID == id, ]$snps_in_roh[[1]]
-#    genos <- as.numeric(as(sheep_geno[id_index, ], Class = "numeric"))
-#    genos[roh_snps_sub] <- NA # give roh snps NA so that they aren't counted in het calc
-#    # calc multilocus homozygosity
-#    hom <- sum(genos!=1, na.rm = TRUE)/sum(!is.na(genos))
-#    nsnps <- sum(!is.na(genos))
-#    out <- data.frame(hom, nsnps)
-# }
-# 
-# homs <- map(roh_snps$IID, calc_hom, sheep_geno, roh_snps)
-# homs_df <- bind_rows(homs)
-# #saveRDS(homs_df, file = "output/homs_df.rds")
-# homs_df <- readRDS("output/homs_df.rds")
-# homs_df$id <- as.character(roh_snps$IID)
-# 
-# # combine homozygosity outside ROH and qc
-# hom_and_qc <- homs_df %>% 
-#          left_join(sample_qc) %>% 
-#          dplyr::select(id, everything()) %>% 
-#          setNames(c("id", "hom_out_roh", "nsnps_hom", "call_rate", "certain", "het_all")) %>% 
-#          select(-certain)
-# 
-# plot(test$hom, test$Call.rate)
+sheep_plink_name <- "../sheep/data/SNP_chip/oar31_mapping/sheep_geno_imputed_oar31_17052020"
+# read merged plink data
+sheep_bed <- paste0(sheep_plink_name, ".bed")
+sheep_bim <- paste0(sheep_plink_name, ".bim")
+sheep_fam <- paste0(sheep_plink_name, ".fam")
 
+# load genotypes
+full_sample <- read.plink(sheep_bed, sheep_bim, sheep_fam)
+sheep_geno <- full_sample$genotypes
+sample_qc <- row.summary(sheep_geno) %>% as_tibble(rownames = "id")
+
+# filter roh and genotypes for individuals with call rate > 0.99
+high_call_rate_id <- sample_qc %>% filter(Call.rate >= 0.99) %>% .$id
+
+# genotypes
+sheep_geno <- sheep_geno[rownames(sheep_geno) %in% high_call_rate_id, ]
+# roh
+roh <- roh %>% filter(IID %in% high_call_rate_id)
+
+# get snp names
+snp_names <- read_delim("../sheep/data/SNP_chip/oar31_mapping/sheep_geno_imputed_oar31_17052020.bim", "\t",
+                         col_names = FALSE) %>% .$X2
+snp_index <- 1:length(snp_names)
+snps_df <- data.frame(SNP1 = snp_names, SNP1_index = snp_index,
+                      stringsAsFactors = FALSE)
+
+# find SNPs in ROH for each individual
+roh_snps <- roh %>%
+   as_tibble() %>%
+   #sample_frac(0.00001) %>%
+   left_join(snps_df, by = "SNP1") %>%
+   mutate(SNP2_index = SNP1_index + NSNP - 1) %>%
+   mutate(snp_indices = paste0(SNP1_index, ":", SNP2_index)) %>%
+   mutate(snp_indices_full = purrr::map(snp_indices, function(x) eval(parse(text = x)))) %>%
+   group_by(IID) %>%
+   summarise(snps_in_roh = list(unlist(c(snp_indices_full))))
+
+
+double_check <- unlist(apply(roh_snps,1, function(x) length(x[2][[1]])))
+hist(double_check)
+
+
+# sheep_geno <- as(full_sample$genotypes, Class = "numeric")
+# sheep_geno <- sheep_geno[rownames(full_sample$genotypes) %in% as.character(roh_snps$IID), ]
+
+# calculate maf
+snps_stats <- col.summary(full_sample$genotypes) %>% as_tibble(rownames = "snp")
+
+calc_hom <- function(id, sheep_geno, roh_snps) {
+   
+   id_index <- which(rownames(sheep_geno) == id)
+   roh_snps_sub <- roh_snps[roh_snps$IID == id, ]$snps_in_roh[[1]]
+   num_snps_roh <- length(roh_snps_sub)
+   
+   # convert to numeric matrix and make it a vector
+   genos <- as(sheep_geno[id_index, ], Class = "numeric")[1, ]
+   # how many non-na genotypes overall?
+   num_snps_all <- sum(!is.na(genos))
+   
+   # give roh snps NA so that they aren't counted in het calc
+   genos_not_roh <- genos
+   genos_not_roh[roh_snps_sub] <- NA 
+   
+   # calculate moments estimate of inbreeding coefficient (Wright, 1948)
+   # get expected homozygosity
+   # snp_stats_sub <- snps_stats[!is.na(genos_not_roh), ]
+   # mafs <- snp_stats_sub$MAF
+   # # # exp number of homozygous snps
+   # exp_hom <- sum(1 - (2*mafs*(1-mafs)))
+   # obs_hom <- sum(genos_not_roh != 1, na.rm = TRUE)
+   # 
+   # # see clark et al (2019), equation 4 in methods
+   # o_dash_hom <-   obs_hom - num_snps_roh
+   # e_dash_hom <- ((num_snps_all - num_snps_roh)/num_snps_all) * exp_hom
+   # n_dash <- num_snps_all - num_snps_roh
+   # f_snp_outside_roh <- (o_dash_hom - e_dash_hom) / (n_dash - e_dash_hom)
+   
+   # calculate number of SNPs outside ROH
+   num_snps_non_roh <- sum(!is.na(genos_not_roh))
+   num_snps_non_roh_hom <- sum(genos_not_roh!=1, na.rm = TRUE)
+   out <- data.frame(num_snps_non_roh_hom, num_snps_non_roh, num_snps_all)
+}
+
+homs <- map(roh_snps$IID, calc_hom, sheep_geno, roh_snps)
+homs_df <- bind_rows(homs) %>% 
+            mutate(hom1_all = num_snps_non_roh_hom/num_snps_all,
+                   hom2_out = num_snps_non_roh_hom/num_snps_non_roh)
+
+saveRDS(homs_df, file = "output/homs_df.rds")
+#homs_df <- readRDS("output/homs_df.rds")
+homs_df$id <- as.character(roh_snps$IID)
+
+# combine homozygosity outside ROH and qc
+hom_and_qc <- homs_df %>%
+         left_join(sample_qc) %>%
+         dplyr::select(id, everything()) %>%
+         rename(call_rate = Call.rate, het_all = Heterozygosity) %>% 
+         #setNames(c("id", "f_snp", "hom_out_roh", "nsnps_hom", "call_rate", "certain", "het_all")) %>%
+         select(-Certain.calls)
 
 # ROH classes ------------------------------------------------------------------
 
@@ -146,6 +189,7 @@ prop_IBD_df_with_0 <- prop_IBD_df %>%
 prop_IBD_df_with_0 %>% arrange(IID)
 
 
+# plot correlation matrix
 lowerFn <- function(data, mapping, method = "lm", ...) {
       p <- ggplot(data = data, mapping = mapping) +
             geom_point(colour = "blue") +
@@ -164,7 +208,7 @@ ggsave("figs/froh_corr_mat.jpg", height = 11, width = 14)
 # ROH class distribution across individuals
 library(viridis)
 col_pal <- viridis(8)
-prop_IBD_df_with_0 %>% 
+p_roh_dist <- prop_IBD_df_with_0 %>% 
       mutate(prop_IBD = prop_IBD * 100) %>% 
       ggplot(aes(length_class, prop_IBD, fill = length_class)) +
       geom_half_point(side = "l", shape = 21, alpha = 0.5, stroke = 0.1, size =2,
@@ -172,7 +216,7 @@ prop_IBD_df_with_0 %>%
       geom_half_boxplot(side = "r", outlier.color = NA,
                         width = 0.6, lwd = 0.3, color = "black",
                         alpha = 0.8) +
-     # theme_simple(axis_lines = TRUE, grid_lines = FALSE, base_size = 13) +
+      theme_simple(axis_lines = TRUE, grid_lines = FALSE, base_size = 13) +
       ylab("% genome") +
       scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
       scale_fill_manual(values = col_pal, name = "ROH class (Mb)") +
@@ -181,17 +225,16 @@ prop_IBD_df_with_0 %>%
             axis.title=element_text(size = rel(1.1)), 
             axis.text = element_text(color = "black")) + 
       xlab("ROH classes in Mb") 
-
+p_roh_dist 
+ggsave("figs/roh_len_dist.jpg", p_roh_dist, height = 3, width = 8)
 quantile(roh$KB, probs = c(0.25,0.5,0.75))
-
-
 
 # define ROH length classes
 calc_froh_classes <- function(roh_crit, roh_lengths) {
    
    roh_filt <- dplyr::case_when(
-      roh_crit == "short"  ~ expr(KB < 1221),
-      roh_crit == "medium" ~ expr((KB >= 1221)&(KB < 4885)),
+      roh_crit == "short"  ~ expr(KB < 4885),
+      #roh_crit == "medium" ~ expr((KB >= 1221)&(KB < 4885)),
       roh_crit == "long"   ~ expr(KB >= 4885),
       roh_crit == "all" ~ expr(KB > 0)
    )
@@ -209,7 +252,7 @@ calc_froh_classes <- function(roh_crit, roh_lengths) {
 
 # proportion of ROH length classes in each genome. Individuals which
 # do not have long ROH have 0 for this class.
-ROH_classes <- c("short", "medium", "long", "all")
+ROH_classes <- c("short", "long", "all")
 froh <- purrr::map(ROH_classes, calc_froh_classes, roh) %>% 
    purrr::reduce(left_join, by = "ID") %>% 
    replace_na(list(FROH_long = 0)) %>% 
@@ -218,10 +261,10 @@ froh <- purrr::map(ROH_classes, calc_froh_classes, roh) %>%
 
 # join with hom
 froh <- froh %>% 
-         left_join(hom_and_qc)
+         left_join(hom_and_qc) 
 
-froh %>% filter(call_rate > 0.95) %>% 
-   ggplot(aes(froh_long, hom_out_roh)) +
+froh %>% filter(call_rate > 0.99) %>% 
+   ggplot(aes(froh_long, hom1_all)) +
    geom_point()
 #plot(froh$froh_all, homs_df$nsnps)
 
@@ -239,23 +282,19 @@ sheep_ped <- read_delim("../sheep/data/SNP_chip/20190711_Soay_Pedigree.txt",
    MasterBayes::orderPed() 
 
 fitness_data <- annual_fitness %>% 
-   left_join(froh, by = "ID")
+   rename(id = ID) %>% 
+   mutate(id = as.character(id)) %>% 
+   left_join(froh, by = "id")
 
+
+# make data.frame for analysis
 fitness_data <- fitness_data %>% 
    dplyr::rename(birth_year = BIRTHYEAR,
                  sheep_year = SheepYear,
                  age = Age,
-                 id = ID,
                  twin = TWIN,
                  sex = SEX,
                  mum_id = MOTHER,
-                 froh_short =  froh_short,
-                 froh_medium = froh_medium,
-                 froh_long =   froh_long,
-                 froh_all =    froh_all,
-                 hom = hom,
-                 nsnps_hom = nsnps,
-                 # froh_not_roh = hom,
                  survival = Survival,
                  comment = Comment,
                  seen_in_rut = SeenInRut,
@@ -277,18 +316,19 @@ fitness_data <- fitness_data %>%
                  offspr_surv_aug = AugSurvOffspring,
                  offspr_surv_oct = OctSurvOffspring,
                  offspr_surv_wint = OverWinterOffspring) %>% 
-   dplyr::select(id, survival, comment, sheep_year, age, birth_year,
-                 sex, mum_id, twin, froh_all, froh_long, froh_medium, 
-                 froh_all, everything()) %>% 
+   dplyr::select(id, survival, sheep_year, age, birth_year,
+                 sex, mum_id, twin, froh_all, froh_long, froh_short, hom1_all, 
+                 hom2_out,
+                 starts_with("offspring"), everything()) %>% 
    # for sex, check what Cas is
    filter(sex %in% c("F", "M")) %>% 
-   # some individuals arent imputed well and should be discarded 
-   #filter(!(id %in% IDs_lots_missing$id)) %>% 
+   # only take individuals with very high genotyping call (imputation) rate.
+   filter(call_rate > 0.99) %>% 
    # na rows should be discarded
    mutate_at(c("id", "sheep_year", "birth_year", "sex",
                "mum_id", "twin"), as.factor)
 
 
-save(fitness_data, file = "data/survival_mods_data.RData") # formerly fitness_roh_df
+save(fitness_data, file = "data/roh_mods_600kb.RData") # formerly fitness_roh_df
 save(sheep_ped, file = "data/sheep_ped.RData") # ordered ped
 
