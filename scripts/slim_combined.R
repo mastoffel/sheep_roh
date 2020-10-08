@@ -22,10 +22,10 @@ slim_roh <- function(seed, ...) {
       # use vcf output to call ROH
       system(paste0("/usr/local/bin/plink --vcf slim_sim/sims/vcfs/", run_name, ".vcf ", 
                     "--sheep --out slim_sim/sims/roh/", run_name, " ",
-                    "--homozyg --homozyg-window-snp 15 --homozyg-snp 15 --homozyg-kb 305 ",
-                    "--homozyg-gap 100 --homozyg-density 100 --homozyg-window-missing 0 ",
-                    "--homozyg-het 0 ",
-                    "--homozyg-window-het 0"))
+                    "--homozyg --homozyg-window-snp 20 --homozyg-snp 20 --homozyg-kb 781 ",
+                    "--homozyg-gap 300 --homozyg-density 100 --homozyg-window-missing 0 ",
+                    "--homozyg-het 1 ",
+                    "--homozyg-window-het 1"))
       
 }
 
@@ -50,7 +50,7 @@ source("scripts/slim3alt_mut_and_roh.R")
 # make a safe combine function
 combine_safe <- safely(combine_mut_roh)
 # combine mutations and roh data and calculate length classes
-out <- map(paste0("sheep_", seeds), combine_safe, roh_cutoff_small = 1221, roh_cutoff_long = 4885)
+out <- map(paste0("sheep_", seeds), combine_safe, roh_cutoff_small = 3130, roh_cutoff_long = 6250)
 
 # extract only non-error runs and combine
 mut_df <- out %>% 
@@ -62,7 +62,7 @@ mut_df <- out %>%
    # complete(nesting(id, roh_class)) %>% 
    # arrange(id)
 
-saveRDS(mut_df, file = "slim_sim/sims/out/sims_weakly_100reps_small12_long48_10000g.RData")
+saveRDS(mut_df, file = "slim_sim/sims/out/sims_weakly_test.RData")
 
 mut_p <- mut_df %>% 
    group_by(seed, roh_class) %>% 
