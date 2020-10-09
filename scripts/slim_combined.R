@@ -1,6 +1,7 @@
 library(data.table)
 library(tidyverse)
 source("scripts/make_slim.R")
+source("scripts/slim3alt_mut_and_roh.R")
 library(furrr)
 # run slim simulation
 
@@ -18,6 +19,8 @@ slim_roh <- function(seed, ...) {
       # recapitation and overlay of neutral mutations
       # check that folders are there
       system(paste("python3.8 scripts/slim2_overlay_mut.py", run_name))
+      # eddie
+      #system(paste("python scripts/slim2_overlay_mut.py", run_name))
       
       # call ROH
       # use vcf output to call ROH
@@ -33,12 +36,12 @@ slim_roh <- function(seed, ...) {
 
 
 # combinations
-pop_size1 <- c(1000, 3000)
+pop_size1 <- 1000
 pop_size2 <- 200
 #time1 <- pop_size1 * 10
 #time2 <- time1 + 1000
 mut1_dom_coeff <- c(0.05, 0.2)
-mut1_gam_mean <- c(-0.02, -0.05)
+mut1_gam_mean <- c(-0.01, -0.03, -0.05)
 mut1_gam_shape <- 0.2
 genome_size <- 1e8
 mut_rate_del <- 1e-9
@@ -50,14 +53,14 @@ params <- expand_grid(pop_size1, pop_size2, mut1_dom_coeff, mut1_gam_mean, mut1_
               time2 = time1 + 1000)
 
 # try 10 simulation with only weakly deleterious alleles
-num_sim_per_parset <- 10
+num_sim_per_parset <- 2
 set.seed(123)
 seeds <- sample(1:1e5, num_sim_per_parset * nrow(params))
 # replicate each parameter set num_sim_per_parset times
 params_sim <- params[rep(1:nrow(params), each =num_sim_per_parset), ] %>% 
                mutate(seed = seeds)
 
-plan(multiprocess, workers = 4)
+plan(multiprocess, workers = 12)
 # make all roh and trees files and recapitate
 future_pmap(params_sim, slim_roh)
 
@@ -74,7 +77,6 @@ future_pmap(params_sim, slim_roh)
 #                   #mut3_dom_coeff = 0.8
 #                   #)
 
-source("scripts/slim3alt_mut_and_roh.R")
 # make a safe combine function
 combine_safe <- safely(combine_mut_roh)
 # combine mutations and roh data and calculate length classes
@@ -85,8 +87,10 @@ mut_df <- out %>%
    purrr::transpose() %>% 
    .[[1]] %>% 
    bind_rows() %>% 
-   mutate(id = paste0(ind_id, seed)) %>% 
-   dplyr::arrange(id)
+   mutate(id = paste0(ind_id, seed),
+          seed = as.numeric(seed)) %>% 
+   dplyr::arrange(id) %>% 
+   left_join(params_sim, by = "seed")
    # complete(nesting(id, roh_class)) %>% 
    # arrange(id)
 
