@@ -2,18 +2,34 @@ library(glue)
 library(tidyverse)
 
 # makes a slim simulation file
-make_slim <- function(genome_size = 1e8, pop_size1 = 5000, pop_size2 = 200, 
-                      time1 = 10000, time2 = 11000,
-                      mut_rate_del = 1e-9, recomb_rate = 1.27e-8,
-                      mut1_dom_coeff = 0.1, mut1_gam_mean = -0.03, 
-                      mut1_gam_shape = 0.2,
+# original params genome_size = 1e8, pop_size1 = 5000, pop_size2 = 200, 
+#  time1 = 10000, time2 = 11000,  mut_rate_del = 1e-9, recomb_rate = 1.27e-8,
+#    mut1_gam_shape = 0.2,
+make_slim <- function(genome_size = NULL, pop_size1 = NULL, pop_size2 = NULL, 
+                      time1 = NULL, time2 = NULL,
+                      mut_rate_del = NULL, recomb_rate = NULL,
+                      mut1_dom_coeff = NULL, mut1_gam_mean = NULL, 
+                      mut1_gam_shape = NULL,
                       mut2_dom_coeff = NULL, mut2_gam_mean = NULL, 
                       mut2_gam_shape = NULL, mut2_rel_freq = NULL,
                       mut3_dom_coeff = NULL, mut3_gam_mean = NULL, 
                       mut3_gam_shape = NULL, mut3_rel_freq = NULL,
-                      out_dir = "slim_sim/sims/slim_code",
+                      out_dir = "slim_sim/sims",
                       seed = NULL) {
       
+      # output directory
+      slim_code_out <- paste0(out_dir, "/slim_code")
+      dir.create(slim_code_out, recursive = TRUE, showWarnings = TRUE)
+      # output for mutations
+      muts_out <- paste0(out_dir, "/muts")
+      dir.create(muts_out, recursive = TRUE, showWarnings = TRUE)
+      # output for trees
+      trees_out <- paste0(out_dir, "/trees")
+      dir.create(trees_out, recursive = TRUE, showWarnings = TRUE)
+      # # output for vcfs
+      # vcfs_out <- paste0(out_dir, "/vcfs")
+      # dir.create(vcfs_out, recursive = TRUE, showWarnings = TRUE)
+      # 
       # length starts from 0
       genome_size <- genome_size - 1
       
@@ -110,7 +126,7 @@ make_slim <- function(genome_size = 1e8, pop_size1 = 5000, pop_size2 = 200,
       {time2} late() {{
       
       	// tree sequence recording for 
-      	sim.treeSeqOutput("slim_sim/sims/trees/sheep_"+simID+".trees");
+      	sim.treeSeqOutput("{trees_out}/sheep_"+simID+".trees");
       	
       	// mutations per genome
       	genomes = sim.subpopulations.genomes;
@@ -128,7 +144,7 @@ muts[mut_index].id, muts[mut_index].position, muts[mut_index].selectionCoeff));
       			out1_index = out1_index + 1;
       		}}
       		header1=paste(c("genome_id", "pedigree_id", "mut_id", "pos", "s"));
-      		writeFile("slim_sim/sims/muts/mutperind_"+simID+".txt", \\
+      		writeFile("{muts_out}/mutperind_"+simID+".txt", \\
 paste(c(header1, out1), sep="\\n"));
       	}}
       	
@@ -136,7 +152,7 @@ paste(c(header1, out1), sep="\\n"));
       
       ')
       
-      write_lines(slim_file, glue("{out_dir}/sheep_{seed}.slim"))
+      write_lines(slim_file, glue("{slim_code_out}/sheep_{seed}.slim"))
       
 }
 

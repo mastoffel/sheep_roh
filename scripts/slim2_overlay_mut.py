@@ -5,11 +5,17 @@ import inspect
 import msprime, pyslim, gzip
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 script, run_name = argv
 infile = "slim_sim/sims/trees/" + run_name + ".trees"
 print(infile)
+
+# check if output directory exists
+if not os.path.exists('slim_sim/sims/vcfs'):
+    os.makedirs('slim_sim/sims/vcfs')
 outfile = "slim_sim/sims/vcfs/" + run_name + ".vcf"
+    
 ts = pyslim.load(infile) # "slim_sim/sheep.trees"
 
 # alive = ts.individuals_alive_at(0)
