@@ -1,10 +1,14 @@
 library(data.table)
-library(tidyverse)
+#library(tidyverse)
 source("scripts/make_slim.R")
 source("scripts/slim3alt_mut_and_roh.R")
 library(furrr)
 library(future)
 library(glue)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(stringr)
 
 # run slim simulation
 pop_sizes <- commandArgs(trailingOnly=TRUE)
