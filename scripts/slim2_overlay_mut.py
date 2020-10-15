@@ -17,7 +17,7 @@ ts = pyslim.load(infile) # "slim_sim/sheep.trees"
 
 # alive = ts.individuals_alive_at(0)
 # print(f"There are {len(alive)} individuals alive from the final generation.")
-ts.individual(201).id
+#ts.individual(201).id
 
 # why was each individuals retained in tree sequence?
 # indiv_types = {"first_gen" : 0,
