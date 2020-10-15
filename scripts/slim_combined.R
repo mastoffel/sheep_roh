@@ -9,7 +9,7 @@ library(dplyr)
 library(tidyr)
 library(readr)
 library(stringr)
-
+library(purrr)
 # run slim simulation
 pop_sizes <- commandArgs(trailingOnly=TRUE)
 print(pop_sizes)
