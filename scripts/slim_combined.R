@@ -9,7 +9,7 @@ library(dplyr)
 library(tidyr)
 library(readr)
 library(stringr)
-
+library(purrr)
 # run slim simulation
 pop_sizes <- commandArgs(trailingOnly=TRUE)
 print(pop_sizes)
@@ -40,7 +40,7 @@ slim_roh <- function(seed, pop_size = pop_size1, ...) {
       
       # call ROH
       # use vcf output to call ROH
-      system(paste0("/usr/local/bin/plink --vcf slim_sim/sims/vcfs/", run_name, ".vcf ",  # /usr/local/bin/plink
+      system(paste0("plink --vcf slim_sim/sims/vcfs/", run_name, ".vcf ",  # /usr/local/bin/plink
                     "--sheep --out slim_sim/sims/roh/", run_name, " ",
                     "--homozyg --homozyg-window-snp 30 --homozyg-snp 30 --homozyg-kb 390 ",
                     "--homozyg-gap 100 --homozyg-density 100 --homozyg-window-missing 0 ",
