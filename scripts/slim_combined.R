@@ -33,7 +33,7 @@ slim_roh <- function(seed, pop_size = pop_size1, ...) {
       
       # run slim
       #system(paste0("slim -time -Memhist -seed ", seed, " slim_sim/sims/slim_code/sheep_", seed, ".slim"))
-      system(paste0("slim -time -Memhist -seed ", seed," ", out_path, "/slim_code/sheep_", seed, ".slim"))
+      system(paste0("slim -time -seed ", seed," ", out_path, "/slim_code/sheep_", seed, ".slim"))
       
       # recapitation and overlay of neutral mutations
       # check that folders are there
