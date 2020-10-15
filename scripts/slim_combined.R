@@ -18,7 +18,7 @@ pop_size1 <- as.numeric(pop_sizes[1])
 pop_size2 <- as.numeric(pop_sizes[2])
 
 # directory structure
-to_create <- paste0("slim_sim/sims/", c("muts", "out", "roh", "slim_code", "trees", "vcf"))
+to_create <- paste0("slim_sim/sims/", c("muts", "out", "roh", "slim_code", "trees", "vcfs"))
 walk(to_create, dir.create, recursive = TRUE, showWarnings = TRUE)
 
 # dotdotdot is input for making the slim file, see make_slim.R
