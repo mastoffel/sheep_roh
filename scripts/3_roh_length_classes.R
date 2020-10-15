@@ -100,7 +100,7 @@ IBD_df_with_0 <- IBD_df %>%
 IBD_df_with_0 %>% arrange(id)
 
 library(viridis)
-col_pal <- viridis(9)
+col_pal <- viridis(7)
 p_roh_dist <- IBD_df_with_0 %>% 
       #mutate(prop_IBD = prop_IBD / 10) %>% 
       ggplot(aes(length_class, prop_IBD, fill = length_class)) +
@@ -111,6 +111,7 @@ p_roh_dist <- IBD_df_with_0 %>%
                         alpha = 0.8) +
       theme_simple(axis_lines = TRUE, grid_lines = FALSE, base_size = 13) +
       ylab("% genome") +
+      scale_y_continuous(labels = c("0", "5", "10"), breaks = c(0, 0.05, 0.1)) +
       scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
       scale_fill_manual(values = col_pal, name = "ROH class (Mb)") +
       theme(legend.position = "none",

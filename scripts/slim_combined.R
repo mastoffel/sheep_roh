@@ -3,10 +3,22 @@ library(tidyverse)
 source("scripts/make_slim.R")
 source("scripts/slim3alt_mut_and_roh.R")
 library(furrr)
+library(future)
+library(glue)
+
 # run slim simulation
+pop_sizes <- commandArgs(trailingOnly=TRUE)
+print(pop_sizes)
+if (length(pop_sizes) != 2) stop("Provide pop_size1 and pop_size2")
+pop_size1 <- as.numeric(pop_sizes[1])
+pop_size2 <- as.numeric(pop_sizes[2])
+
+# directory structure
+to_create <- paste0("slim_sim/sims/", c("muts", "out", "roh", "slim_code", "trees", "vcf"))
+walk(to_create, dir.create, recursive = TRUE, showWarnings = TRUE)
 
 # dotdotdot is input for making the slim file, see make_slim.R
-slim_roh <- function(seed, ...) {
+slim_roh <- function(seed, pop_size = pop_size1, ...) {
       
       run_name <- paste0("sheep_", seed)
       
@@ -18,14 +30,13 @@ slim_roh <- function(seed, ...) {
       
       # recapitation and overlay of neutral mutations
       # check that folders are there
-      system(paste("python3.8 scripts/slim2_overlay_mut.py", run_name))
+      system(paste("python scripts/slim2_overlay_mut.py", run_name, pop_size1))
       # eddie
       #system(paste("python scripts/slim2_overlay_mut.py", run_name))
       
       # call ROH
       # use vcf output to call ROH
-      dir.create("slim_sim/sims/roh", recursive = TRUE, showWarnings = TRUE)
-      system(paste0("/usr/local/bin/plink --vcf slim_sim/sims/vcfs/", run_name, ".vcf ", 
+      system(paste0("/usr/local/bin/plink --vcf slim_sim/sims/vcfs/", run_name, ".vcf ",  # /usr/local/bin/plink
                     "--sheep --out slim_sim/sims/roh/", run_name, " ",
                     "--homozyg --homozyg-window-snp 30 --homozyg-snp 30 --homozyg-kb 390 ",
                     "--homozyg-gap 100 --homozyg-density 100 --homozyg-window-missing 0 ",
@@ -36,24 +47,27 @@ slim_roh <- function(seed, ...) {
 
 
 # combinations
-pop_size1 <- 1000
-pop_size2 <- 200
+#pop_size1 <- 1000
+#pop_size2 <- 200
 #time1 <- pop_size1 * 10
 #time2 <- time1 + 1000
-mut1_dom_coeff <- c(0.05, 0.2)
+mut1_dom_coeff <- c(0, 0.05, 0.2)
 mut1_gam_mean <- c(-0.01, -0.03, -0.05)
 mut1_gam_shape <- 0.2
 genome_size <- 1e8
 mut_rate_del <- 1e-9
 recomb_rate <- 1e-8
 
-params <- expand_grid(pop_size1, pop_size2, mut1_dom_coeff, mut1_gam_mean, mut1_gam_shape,
+params <- expand.grid(pop_size1, pop_size2, mut1_dom_coeff, mut1_gam_mean, mut1_gam_shape,
             genome_size, mut_rate_del, recomb_rate) %>% 
-          mutate(time1 = pop_size1 * 10,
+          setNames(c("pop_size1", "pop_size2", "mut1_dom_coeff", "mut1_gam_mean", "mut1_gam_shape",
+                   "genome_size", "mut_rate_del", "recomb_rate")) %>% 
+          as_tibble() %>% 
+          mutate(time1 = 10000,        #pop_size1 * 10,
               time2 = time1 + 1000)
 
 # try 10 simulation with only weakly deleterious alleles
-num_sim_per_parset <- 2
+num_sim_per_parset <- 1
 set.seed(123)
 seeds <- sample(1:1e5, num_sim_per_parset * nrow(params))
 # replicate each parameter set num_sim_per_parset times
@@ -62,7 +76,7 @@ params_sim <- params[rep(1:nrow(params), each =num_sim_per_parset), ] %>%
 
 plan(multiprocess, workers = 4)
 # make all roh and trees files and recapitate
-future_pmap(params_sim, slim_roh)
+future_pmap(params_sim, slim_roh, pop_size1)
 
 # make all roh and trees files and recapitate
 # future_map(seeds, slim_roh,  genome_size = 1e8, pop_size1 = 1000, pop_size2 = 200, 
@@ -97,7 +111,8 @@ mut_df <- out %>%
 #saveRDS(mut_df, file = "slim_sim/sims/out/sims_weakly_03.RData")
 
 dir.create("slim_sim/sims/out", recursive = TRUE, showWarnings = TRUE)
-write_delim(mut_df, "slim_sim/sims/out/par_combs.txt")
+write_delim(mut_df, paste0("slim_sim/sims/out/par_combs_popsize1_", pop_size1,
+                           "popsize2_", pop_size2, ".txt"))
 
 
 # mut_p <- mut_df %>% 

@@ -1,6 +1,3 @@
-library(glue)
-library(tidyverse)
-
 # makes a slim simulation file
 # original params genome_size = 1e8, pop_size1 = 5000, pop_size2 = 200, 
 #  time1 = 10000, time2 = 11000,  mut_rate_del = 1e-9, recomb_rate = 1.27e-8,
@@ -19,13 +16,10 @@ make_slim <- function(genome_size = NULL, pop_size1 = NULL, pop_size2 = NULL,
       
       # output directory
       slim_code_out <- paste0(out_dir, "/slim_code")
-      dir.create(slim_code_out, recursive = TRUE, showWarnings = TRUE)
       # output for mutations
       muts_out <- paste0(out_dir, "/muts")
-      dir.create(muts_out, recursive = TRUE, showWarnings = TRUE)
       # output for trees
       trees_out <- paste0(out_dir, "/trees")
-      dir.create(trees_out, recursive = TRUE, showWarnings = TRUE)
       # # output for vcfs
       # vcfs_out <- paste0(out_dir, "/vcfs")
       # dir.create(vcfs_out, recursive = TRUE, showWarnings = TRUE)

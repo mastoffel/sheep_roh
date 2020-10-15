@@ -3,6 +3,7 @@ library(lme4)
 library(GGally)
 library(partR2)
 library(broom.mixed)
+library(performance)
 load("data/fitness_roh.RData") 
 load("data/sheep_ped.RData")
 ped <- sheep_ped
@@ -45,41 +46,18 @@ nlopt <- function(par, fn, lower, upper, control) {
       )
 }
 # froh_long + froh_short + 
-mod <- glmer(survival ~ froh_long_std + froh_medium_std + froh_short_std  + sex + twin + (1|sheep_year) + (1|mum_id) + (1|birth_year), 
+mod <- glmer(survival ~ froh_long_std + froh_medium_std + froh_short_std  + sex + twin + (1|mum_id) + (1|birth_year), 
              family = binomial, data = juv_survival,
              #control = glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=100000)))
              control = glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+#mod_out <- tidy(mod, conf.int = TRUE, conf.method = "boot", nsim = 1000)
 tidy(mod, conf.int = TRUE)
 summary(mod)
-check_model(mod)
-plot_model(mod)
-# try brms
-# mod_brms <- brm(survival ~ froh_long_std + froh_medium_std + froh_short_std + sex + twin + (1|sheep_year) + (1|mum_id) + (1|birth_year), 
-#                 family = bernoulli(), data = juv_survival)
-# summary(mod_brms)
-# plot(mod_brms)
-# reproductive success
-rs <- fitness_data %>% 
-      filter(sex == "M" & age > 1) %>% 
-      filter_at(vars(offspring_born, froh_all, sheep_year, birth_year), ~ !is.na(.)) %>% 
-      mutate(age_std = as.numeric(scale(age)),
-             age_std2 = age_std^2,
-             froh_all_cent =    froh_all - mean(froh_all, na.rm = TRUE),
-             froh_short_cent =  froh_short - mean(froh_short, na.rm = TRUE),
-             froh_long_cent =   froh_long - mean(froh_long, na.rm = TRUE),
-             froh_all_std = scale(froh_all),
-             froh_short_std = scale(froh_short),
-             froh_long_std = scale(froh_long),
-             froh_medium_cent = froh_medium - mean(froh_medium, na.rm = TRUE),
-             froh_medium_std = scale(froh_medium),
-             olre = 1:nrow(.)) 
+library(sjPlot)
+tab_model(mod,show.r2 = FALSE, show.icc = FALSE, auto.label = TRUE, transform = NULL)
 
-mod <- glmer(offspring_born ~ froh_long_std + froh_medium_std + froh_short_std + twin + 
-                   age_std + age_std^2 + (1|sheep_year) + (1|birth_year) + (1|id) + (1|olre), 
-             family = poisson, data = rs,
-             control = glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
 
-tidy(mod, conf.int = TRUE)
-plot_model(mod)
-plot(mod)
-check_model(mod)
+
+
+
+
