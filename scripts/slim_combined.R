@@ -11,14 +11,16 @@ library(readr)
 library(stringr)
 library(purrr)
 # run slim simulation
-pop_sizes <- commandArgs(trailingOnly=TRUE)
-print(pop_sizes)
-if (length(pop_sizes) != 2) stop("Provide pop_size1 and pop_size2")
-pop_size1 <- as.numeric(pop_sizes[1])
-pop_size2 <- as.numeric(pop_sizes[2])
+args_in <- commandArgs(trailingOnly=TRUE)
+print(args_in)
+if (length(args_in) != 3) stop("Provide pop_size1, pop_size2 and output folder")
+out_path <- args_in[1]
+pop_size1 <- as.numeric(args_in[2])
+pop_size2 <- as.numeric(args_in[3])
+
 
 # directory structure
-to_create <- paste0("slim_sim/sims/", c("muts", "out", "roh", "slim_code", "trees", "vcfs"))
+to_create <- paste0(out_path, "/", c("muts", "out", "roh", "slim_code", "trees", "vcfs"))
 walk(to_create, dir.create, recursive = TRUE, showWarnings = TRUE)
 
 # dotdotdot is input for making the slim file, see make_slim.R
@@ -27,10 +29,11 @@ slim_roh <- function(seed, pop_size = pop_size1, ...) {
       run_name <- paste0("sheep_", seed)
       
       # create slim_simulation
-      make_slim(seed = seed, out_dir = "slim_sim/sims", ...)
+      make_slim(seed = seed, out_dir = out_path, ...)
       
       # run slim
-      system(paste0("slim -time -Memhist -seed ", seed, " slim_sim/sims/slim_code/sheep_", seed, ".slim"))
+      #system(paste0("slim -time -Memhist -seed ", seed, " slim_sim/sims/slim_code/sheep_", seed, ".slim"))
+      system(paste0("slim -time -Memhist -seed ", seed," ", out_path, "/slim_code/sheep_", seed, ".slim"))
       
       # recapitation and overlay of neutral mutations
       # check that folders are there
@@ -40,7 +43,7 @@ slim_roh <- function(seed, pop_size = pop_size1, ...) {
       
       # call ROH
       # use vcf output to call ROH
-      system(paste0("plink --vcf slim_sim/sims/vcfs/", run_name, ".vcf ",  # /usr/local/bin/plink
+      system(paste0("plink --vcf ", out_path, "/vcfs/", run_name, ".vcf ",  # /usr/local/bin/plink
                     "--sheep --out slim_sim/sims/roh/", run_name, " ",
                     "--homozyg --homozyg-window-snp 30 --homozyg-snp 30 --homozyg-kb 390 ",
                     "--homozyg-gap 100 --homozyg-density 100 --homozyg-window-missing 0 ",
@@ -115,8 +118,8 @@ mut_df <- out %>%
 #saveRDS(mut_df, file = "slim_sim/sims/out/sims_weakly_03.RData")
 
 dir.create("slim_sim/sims/out", recursive = TRUE, showWarnings = TRUE)
-write_delim(mut_df, paste0("slim_sim/sims/out/par_combs_popsize1_", pop_size1,
-                           "popsize2_", pop_size2, ".txt"))
+write_delim(mut_df, paste0(out_path, "/out/par_combs_popsize1_", pop_size1,
+                           "_popsize2_", pop_size2, ".txt"))
 
 
 # mut_p <- mut_df %>% 
