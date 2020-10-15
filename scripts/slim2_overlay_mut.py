@@ -12,6 +12,7 @@ script, run_name, pop_size = argv
 infile = "slim_sim/sims/trees/" + run_name + ".trees"
 outfile = "slim_sim/sims/vcfs/" + run_name + ".vcf"
 
+pop_size = int(pop_size)
 # tree sequence
 ts = pyslim.load(infile) # "slim_sim/sheep.trees"
 
