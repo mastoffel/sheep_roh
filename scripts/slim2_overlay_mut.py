@@ -73,7 +73,7 @@ mutated = pyslim.SlimTreeSequence(msprime.mutate(recap, rate=1e-8,
 n_dip_indv = int(mutated.num_samples / 2)
 ind_names=[0] * n_dip_indv
 for i in range(n_dip_indv):
-      ind_names[i] = mutated.individual(i).metadata.pedigree_id
+      ind_names[i] = mutated.individual(i).metadata["pedigree_id"]
       
 #indv_names = [f"tsk_{str(i)}indv" for i in range(n_dip_indv)]
 indv_names = [f"tsk_{str(i)}indv" for i in ind_names]
