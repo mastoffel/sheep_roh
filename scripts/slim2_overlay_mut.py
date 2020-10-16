@@ -6,6 +6,7 @@ import msprime, pyslim, gzip
 import numpy as np
 #import matplotlib.pyplot as plt
 import os
+import random
 
 # get args
 script, run_name, out_path, pop_size = argv
@@ -75,14 +76,21 @@ n_dip_indv = int(mutated.num_samples / 2)
 ind_names=[0] * n_dip_indv
 for i in range(n_dip_indv):
       ind_names[i] = mutated.individual(i).metadata.pedigree_id
-      
+
+ind_names_sub = random.sample(ind_names, 200)
+
 #indv_names = [f"tsk_{str(i)}indv" for i in range(n_dip_indv)]
 indv_names = [f"tsk_{str(i)}indv" for i in ind_names]
 
 alive = mutated.individuals_alive_at(0).tolist()
 
+# subset 200 individuals
+ind_sub = random.sample(range(len(alive)), 200)
+alive_sub = [alive[i] for i in ind_sub]
+indv_names_sub = [indv_names[i] for i in ind_sub]
+
 with open(outfile, "w") as vcf_file:
-    mutated.write_vcf(vcf_file, individuals = alive, individual_names=indv_names)
+    mutated.write_vcf(vcf_file, individuals = alive_sub, individual_names=indv_names_sub)
     
 
 

@@ -18,6 +18,8 @@ combine_mut_roh <- function(run_name, out_path, roh_cutoff_small = 1221, roh_cut
       # same mutation id, same position
       # collapse each mutation into one row and add variable for homo/heterozygosity
       muts <- read_delim(file_path_mut, " ") %>% 
+            # filter individuals for those in final sample
+            filter(pedigree_id %in% roh$IID) %>% 
             dplyr::group_by(pedigree_id, mut_id) %>%  
             dplyr::summarise(pos = first(pos), s = first(s), copies = n()) %>% 
             dplyr::rename(ind_id = pedigree_id)
