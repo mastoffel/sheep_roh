@@ -1,19 +1,19 @@
 # combine ROH and mutations from slim
 
-combine_mut_roh <- function(run_name,  roh_cutoff_small = 1221, roh_cutoff_long = 4885) {
+combine_mut_roh <- function(run_name, out_path, roh_cutoff_small = 1221, roh_cutoff_long = 4885) {
       
       # cutoff for short/long ROH in KB
       #roh_cutoff <- 5000
       
       # get roh
-      file_path_roh <- paste0("slim_sim/sims/roh/", run_name, ".hom")
+      file_path_roh <- paste0(out_path, "/roh/", run_name, ".hom")
       roh <- fread(file_path_roh) %>% 
             mutate(IID = str_replace(IID, "indv", "")) %>% 
             as_tibble()
       
       # load mutations per individual
       run_name_mut <- str_replace(run_name, "sheep", "mutperind")
-      file_path_mut <- paste0("slim_sim/sims/muts/", run_name_mut, ".txt")
+      file_path_mut <- paste0(out_path, "/muts/", run_name_mut, ".txt")
       
       # same mutation id, same position
       # collapse each mutation into one row and add variable for homo/heterozygosity
@@ -60,7 +60,6 @@ combine_mut_roh <- function(run_name,  roh_cutoff_small = 1221, roh_cutoff_long 
             )) %>% 
             group_by(IID, roh_class) %>% 
             summarise(sum_kb = sum(KB)) %>% 
-            
             pivot_wider(names_from = roh_class, values_from = sum_kb) %>% 
             rename(ind_id = IID) %>% 
             replace_na(list(long = 0, medium = 0, short = 0)) %>% 

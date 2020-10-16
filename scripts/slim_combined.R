@@ -37,14 +37,14 @@ slim_roh <- function(seed, pop_size = pop_size1, ...) {
       
       # recapitation and overlay of neutral mutations
       # check that folders are there
-      system(paste("python scripts/slim2_overlay_mut.py", run_name, pop_size1))
+      system(paste("python3 scripts/slim2_overlay_mut.py", run_name, out_path, pop_size1))
       # eddie
       #system(paste("python scripts/slim2_overlay_mut.py", run_name))
       
       # call ROH
       # use vcf output to call ROH
       system(paste0("plink --vcf ", out_path, "/vcfs/", run_name, ".vcf ",  # /usr/local/bin/plink
-                    "--sheep --out slim_sim/sims/roh/", run_name, " ",
+                    "--sheep --out ", out_path, "/roh/", run_name, " ",
                     "--homozyg --homozyg-window-snp 30 --homozyg-snp 30 --homozyg-kb 390 ",
                     "--homozyg-gap 100 --homozyg-density 100 --homozyg-window-missing 0 ",
                     "--homozyg-het 0 ",
@@ -101,7 +101,7 @@ future_pmap(params_sim, slim_roh, pop_size1)
 # make a safe combine function
 combine_safe <- safely(combine_mut_roh)
 # combine mutations and roh data and calculate length classes
-out <- map(paste0("sheep_", seeds), combine_safe, roh_cutoff_small = 1560, roh_cutoff_long = 6250)
+out <- map(paste0("sheep_", seeds), combine_safe, out_path, roh_cutoff_small = 1560, roh_cutoff_long = 6250)
 
 # extract only non-error runs and combine
 mut_df <- out %>% 

@@ -7,10 +7,11 @@ import numpy as np
 #import matplotlib.pyplot as plt
 import os
 
+print(pyslim.__version__)
 # get args
-script, run_name, pop_size = argv
-infile = "slim_sim/sims/trees/" + run_name + ".trees"
-outfile = "slim_sim/sims/vcfs/" + run_name + ".vcf"
+script, run_name, out_path, pop_size = argv
+infile = out_path + "/trees/" + run_name + ".trees"
+outfile = out_path + "/vcfs/" + run_name + ".vcf"
 
 pop_size = int(pop_size)
 # tree sequence
