@@ -7,7 +7,6 @@ import numpy as np
 #import matplotlib.pyplot as plt
 import os
 
-print(pyslim.__version__)
 # get args
 script, run_name, out_path, pop_size = argv
 infile = out_path + "/trees/" + run_name + ".trees"

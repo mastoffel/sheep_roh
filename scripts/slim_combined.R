@@ -74,14 +74,14 @@ params <- expand.grid(pop_size1, pop_size2, mut1_dom_coeff, mut1_gam_mean, mut1_
               time2 = time1 + 1000)
 
 # try 10 simulation with only weakly deleterious alleles
-num_sim_per_parset <- 2
+num_sim_per_parset <- 100
 set.seed(123)
 seeds <- sample(1:1e5, num_sim_per_parset * nrow(params))
 # replicate each parameter set num_sim_per_parset times
 params_sim <- params[rep(1:nrow(params), each =num_sim_per_parset), ] %>% 
                mutate(seed = seeds)
 
-plan(multiprocess, workers = 10)
+plan(multiprocess, workers = 20)
 # make all roh and trees files and recapitate
 future_pmap(params_sim, slim_roh, pop_size1)
 
@@ -117,7 +117,6 @@ mut_df <- out %>%
 
 #saveRDS(mut_df, file = "slim_sim/sims/out/sims_weakly_03.RData")
 
-dir.create("slim_sim/sims/out", recursive = TRUE, showWarnings = TRUE)
 write_delim(mut_df, paste0(out_path, "/out/par_combs_popsize1_", pop_size1,
                            "_popsize2_", pop_size2, ".txt"))
 
