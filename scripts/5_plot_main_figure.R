@@ -47,7 +47,7 @@ p1
 # load simulated data
 # 6 parameter combinations,100 runs with 200 individuals each
 mut_df <- read_delim("output/eddie_slim/par_combs_popsize1_1000.txt", " ")
-mut_df <- read_delim("slim_sim/test/out/par_combs_popsize1_50_popsize2_50.txt", " ")
+mut_df <- read_delim("output/qm_slim/par_combs_popsize1_1000_popsize2_200.txt", " ")
 # filter out one parameter combination
 mut_p <- mut_df %>% 
       filter(mut1_gam_mean == -0.03, mut1_dom_coeff == 0.05, roh_class != "outside_roh") %>% 

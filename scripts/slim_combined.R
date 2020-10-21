@@ -43,6 +43,11 @@ slim_roh <- function(seed, pop_size = pop_size1, ...) {
       
       # call ROH
       # use vcf output to call ROH
+      # currently, pyslim sometimes outputs weird REF and ALT positions in the vcf file
+      # these might be the mutations from SLiM
+      # When one of these is the first line in the VCF gt table, then REF is the empty
+      # string and ALT is a large number. plink doesn't like this and will find no ROH
+      # This means that some of the simulations can't be processed further.
       system(paste0("plink --vcf ", out_path, "/vcfs/", run_name, ".vcf ",  # /usr/local/bin/plink
                     "--sheep --out ", out_path, "/roh/", run_name, " ",
                     "--homozyg --homozyg-window-snp 30 --homozyg-snp 30 --homozyg-kb 390 ",
