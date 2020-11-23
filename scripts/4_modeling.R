@@ -59,5 +59,29 @@ tab_model(mod,show.r2 = FALSE, show.icc = FALSE, auto.label = TRUE, transform = 
 
 
 
+# model weight
+juv_weight <- fitness_data %>% 
+   filter_at(vars(survival, froh_all, sheep_year, birth_year, mum_id, weight, hindleg), ~ !is.na(.)) %>% 
+   mutate(age_std = as.numeric(scale(age)),
+          age_std2 = age_std^2,
+          froh_all_cent =    froh_all - mean(froh_all, na.rm = TRUE),
+          froh_short_cent =  froh_short - mean(froh_short, na.rm = TRUE),
+          froh_long_cent =   froh_long - mean(froh_long, na.rm = TRUE),
+          froh_all_std = as.numeric(scale(froh_all)),
+          froh_short_std = as.numeric(scale(froh_short)),
+          froh_long_std = as.numeric(scale(froh_long)),
+          # hom_std = as.numeric(scale(hom1_all))) %>% 
+          froh_medium_cent = froh_medium - mean(froh_medium, na.rm = TRUE),
+          froh_medium_std = scale(froh_medium)) %>% 
+   filter(age == 0)
+
+mod <- lmer(weight ~ froh_long_std + froh_medium_std + froh_short_std  + sex + twin + (1|mum_id) + (1|birth_year), 
+            data = juv_weight)
+
+tidy(mod, conf.int = TRUE)
+summary(mod)
+library(sjPlot)
+tab_model(mod,show.r2 = FALSE, show.icc = FALSE, auto.label = TRUE, transform = NULL)
+
 
 

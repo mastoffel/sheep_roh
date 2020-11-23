@@ -41,7 +41,8 @@ roh <- fread("output/ROH/roh_cM.hom") %>%
       rename(id = IID) %>% 
       rename(cM = KB) %>%
       mutate(cM = cM/1e3) 
-
+max(roh$cM)
+mean(roh$cM)
 # linkage map
 lmap <- read_delim("../sheep_ID/data/7_20200504_Full_Linkage_Map.txt", "\t") %>% 
       rename(snp = SNP.Name,
