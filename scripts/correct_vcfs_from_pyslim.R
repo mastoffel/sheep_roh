@@ -9,9 +9,8 @@ library(tidyverse)
 library(furrr)
 source("scripts/slim3alt_mut_and_roh.R")
 
-out_path <- "output/qm_slim/slim1000200"
+out_path <- "output/qm_slim/slim10000200"
 file_names <- list.files(paste0(out_path, "/vcfs"), full.names = TRUE)
-
 
 correct_vcf <- function(vcf_file) {
       # read meta data
@@ -45,7 +44,7 @@ correct_vcf <- function(vcf_file) {
 }
 
 # replace vcfs and re-run ROH calc
-plan(multiprocess, workers = 4)
+plan(multiprocess, workers = 6)
 future_map(file_names, correct_vcf)
 
 # extract run names
@@ -56,8 +55,34 @@ run_names <- stringr::str_split(file_names, "/") %>%
 # make a safe combine function
 combine_safe <- safely(combine_mut_roh)
 
+#plan(multiprocess, workers = 4)
 # combine mutations and roh data and calculate length classes
-out <- map(run_names, combine_safe, out_path, roh_cutoff_small = 1560, roh_cutoff_long = 6250)
+out <- future_map(run_names, combine_safe, out_path, roh_cutoff_small = 1560, roh_cutoff_long = 6250)
+
+# params
+mut1_dom_coeff <- c(0, 0.05, 0.2)
+mut1_gam_mean <- c(-0.01, -0.03, -0.05)
+mut1_gam_shape <- 0.2
+genome_size <- 1e8
+mut_rate_del <- 1e-9
+recomb_rate <- 1e-8
+pop_size1 <- 10000
+pop_size2 <- 200
+params <- expand.grid(pop_size1, pop_size2, mut1_dom_coeff, mut1_gam_mean, mut1_gam_shape,
+                      genome_size, mut_rate_del, recomb_rate) %>% 
+      setNames(c("pop_size1", "pop_size2", "mut1_dom_coeff", "mut1_gam_mean", "mut1_gam_shape",
+                 "genome_size", "mut_rate_del", "recomb_rate")) %>% 
+      as_tibble() %>% 
+      mutate(time1 = 10000,        #pop_size1 * 10,
+             time2 = time1 + 1000)
+
+# try 10 simulation with only weakly deleterious alleles
+num_sim_per_parset <- 100
+set.seed(123)
+seeds <- sample(1:1e5, num_sim_per_parset * nrow(params))
+# replicate each parameter set num_sim_per_parset times
+params_sim <- params[rep(1:nrow(params), each =num_sim_per_parset), ] %>% 
+      mutate(seed = seeds)
 
 # extract only non-error runs and combine
 mut_df <- out %>% 
@@ -73,6 +98,6 @@ mut_df <- out %>%
 
 #saveRDS(mut_df, file = "slim_sim/sims/out/sims_weakly_03.RData")
 
-dir.create("slim_sim/sims/out", recursive = TRUE, showWarnings = TRUE)
+#dir.create("slim_sim/sims/out", recursive = TRUE, showWarnings = TRUE)
 write_delim(mut_df, paste0(out_path, "/out/par_combs_popsize1_", pop_size1,
                            "_popsize2_", pop_size2, ".txt"))

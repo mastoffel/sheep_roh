@@ -9,6 +9,7 @@ library(patchwork)
 # first year survival model
 mod <- readRDS("output/juv_survival_model.RDS")
 summary(mod)
+
 # CIs
 mod_sum <- tidy(mod, conf.int = TRUE) #  conf.method = "boot", nsim = 1000
 
@@ -25,9 +26,7 @@ p1 <- ggplot(mod_sum_filt, aes(estimate, term, xmax = conf_high, xmin = conf_low
       geom_point(size = 3.5, shape = 21, #col = "#4c566a", #fill = "#eceff4", # "grey69"
                  alpha = 1, stroke = 0.3) + 
       scale_y_discrete(labels = rev(c(expression(F[ROH[long]]),expression(F[ROH[medium]]), expression(F[ROH[short]])))) +
-      # when only showing roh related effs
-      #scale_x_log10(breaks = c(0.1, 0.3, 1, 2, 5), limits = c(0.1, 5), labels = c( "0.1", "0.3", "1", "2", "5")) +
-     # scale_y_discrete(labels = rev(c(expression(F[ROH]), expression(F[ROH]~'*'~Age), expression(F[ROH]~'*'~Lamb)))) +
+     # ggtitle("Empirical analysis") +
       theme_simple(axis_lines = TRUE, base_size = 12) +
       scale_fill_viridis_d(direction = -1) +
       scale_color_viridis_d(direction = -1) +
@@ -38,7 +37,8 @@ p1 <- ggplot(mod_sum_filt, aes(estimate, term, xmax = conf_high, xmin = conf_low
             axis.ticks.y = element_blank(),
             axis.title.y = element_blank(),
             legend.position = "none",
-            axis.text = element_text(color = "black")
+            axis.text = element_text(color = "black", size = 12),
+            axis.title.x = element_text(size = 12)
       ) +
       xlab("Odds ratio and 95% CI")
 p1
@@ -46,8 +46,7 @@ p1
 
 # load simulated data
 # 6 parameter combinations,100 runs with 200 individuals each
-mut_df <- read_delim("output/eddie_slim/par_combs_popsize1_1000.txt", " ")
-mut_df <- read_delim("output/qm_slim/par_combs_popsize1_1000_popsize2_200.txt", " ")
+mut_df <- read_delim("output/qm_slim/slim5000200/out/par_combs_popsize1_5000_popsize2_200.txt", " ")
 # filter out one parameter combination
 mut_p <- mut_df %>% 
       filter(mut1_gam_mean == -0.03, mut1_dom_coeff == 0.05, roh_class != "outside_roh") %>% 
@@ -60,20 +59,16 @@ p2 <- mut_p %>%
       rename(selection = mut1_gam_mean,
              dominance = mut1_dom_coeff) %>% 
       ggplot(aes(roh_class, s_sum_per_MB, fill = roh_class)) +
-      geom_half_point(side = "r", shape = 21, alpha = 0.8, stroke = 0.1, size =2,
+      geom_half_point(side = "r", shape = 21, alpha = 0.6, stroke = 0.3, size =2, color = "#2E3440",
                       transformation_params = list(height = 0, width = 1.3, seed = 1)) +
       geom_half_boxplot(side = "l", outlier.color = NA,
-                        width = 0.5, lwd = 0.5, color = "black",
+                        width = 0.5, lwd = 0.5, color = "#2E3440",
                         alpha = 0.8) +
-      #scale_y_continuous(limits = c(-0.02, 0)) +
       scale_fill_viridis_d(direction = -1) +
       ylab("Selection coefficient per cM") +
-     # xlab("ROH length class") +
       scale_x_discrete(labels = rev(c(expression(ROH[long]),expression(ROH[medium]), expression(ROH[short])))) +
-      #facet_grid(dominance ~ selection, labeller = label_both) +
-      #  ggtitle("Sim: weakly del\nROH cutoff 4900KB, \nmut1. dist: -0.03, 2, dom coeff 0.1 \nmut2. dist: -0.2, 3, dom coeff 0.01") +
-      # geom_jitter(size = 2, alpha = 0.3, width = 0.2) +
       theme_simple(grid_lines = FALSE, axis_lines = TRUE,  base_size = 12) +
+      #ggtitle("Simulation") +
       theme(
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
@@ -81,13 +76,14 @@ p2 <- mut_p %>%
             axis.ticks.y = element_blank(),
             axis.title.y = element_blank(),
             legend.position = "none",
-            axis.text = element_text(color = "black")
+            axis.title.x = element_text(size = 12),
+            axis.text = element_text(color = "black", size = 12)
       ) +
       coord_flip()
 p2
 
 
-p_final <- p2 + p1 + plot_annotation(tag_levels = "A")
+p_final <- p2 + p1 + plot_annotation(tag_levels = "a")
 p_final
 
-ggsave("figs/Fig1.jpg", p_final, width = 6, height = 2.6)
+ggsave("figs/Fig1.jpg", p_final, width = 7, height = 3)

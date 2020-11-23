@@ -19,9 +19,13 @@ combine_mut_roh <- function(run_name, out_path, roh_cutoff_small = 1221, roh_cut
       # collapse each mutation into one row and add variable for homo/heterozygosity
       muts <- read_delim(file_path_mut, " ") %>% 
             # filter individuals for those in final sample
-            filter(pedigree_id %in% roh$IID) %>% 
+            filter(pedigree_id %in% as.numeric(roh$IID)) %>% 
+            dplyr::group_by(mut_id) %>% 
+            # calculate frequency of mutation
+            mutate(mut_freq = n()/length(as.numeric(roh$IID))) %>% 
             dplyr::group_by(pedigree_id, mut_id) %>%  
-            dplyr::summarise(pos = first(pos), s = first(s), copies = n()) %>% 
+            dplyr::summarise(pos = first(pos), s = first(s), mut_freq = first(mut_freq),
+                             copies = n(), originG = first(originG)) %>% 
             dplyr::rename(ind_id = pedigree_id)
       
       # checks whether a mutation is part of an ROH and gives the ROH length if so, else NA
@@ -54,6 +58,7 @@ combine_mut_roh <- function(run_name, out_path, roh_cutoff_small = 1221, roh_cut
            # mutate(mut_in_roh = ifelse(is.na(roh_kb), FALSE, TRUE))
       
       # proportion of the genome in long and short ROH and outside of ROH
+      # genome size: 1e5 KB
       roh_ind <- roh %>% 
             mutate(roh_class = case_when(
                   KB >= roh_cutoff_long ~ "long",
@@ -63,34 +68,38 @@ combine_mut_roh <- function(run_name, out_path, roh_cutoff_small = 1221, roh_cut
             group_by(IID, roh_class) %>% 
             summarise(sum_kb = sum(KB)) %>% 
             pivot_wider(names_from = roh_class, values_from = sum_kb) %>% 
-            rename(ind_id = IID) %>% 
+            dplyr::rename(ind_id = IID) %>% 
             replace_na(list(long = 0, medium = 0, short = 0)) %>% 
             mutate(outside_roh = 1e5 - long - medium - short) %>% 
            # mutate(ind_id = str_replace(ind_id, "indv", "")) %>% 
             pivot_longer(names_to = "roh_class", values_to = "roh_class_genome_cov",
                          cols = -ind_id) # cols = long:outside_roh 
       
-      
+      # disable scientific notation to get correct ind_ids when converting
+      # to chr
+      options(scipen = 999)
       muts_roh_full <- muts_roh %>% 
             mutate(ind_id = as.character(ind_id)) %>%
-            group_by(ind_id, roh_class) %>% 
+            full_join(roh_ind, by = c("ind_id", "roh_class")) %>% 
+            arrange(ind_id, roh_class) %>% 
+           # mutate(roh_class = factor(roh_class, levels = c("long", "medium", "short", "outside_roh"))) %>% 
+            mutate(seed = str_replace(run_name, "sheep_", ""))
+            #group_by(ind_id, roh_class) %>% 
             # filter only homozygous sites
-            filter(copies == 2) %>% 
+           # filter(copies == 2) %>% 
             # how many deleterious homozygotes?
-            add_count(roh_class) %>%
+          #  add_count(roh_class) %>%
             # count selection coefficients only in homozygous state here
             #mutate(s = ifelse(copies == 2, s, s * 0.1)) %>% 
-            summarise(sum_s = sum(s, na.rm = TRUE),
-                      mean_s = mean(s, na.rm = TRUE),
-                      num_mut = mean(n, na.rm = TRUE)#,
-                      #roh_class_genome_cov = sample(roh_class_genome_cov, 1)
-            ) %>% 
-            full_join(roh_ind, by = c("ind_id", "roh_class")) %>% 
-            arrange(ind_id) %>% 
-            mutate(s_sum_per_MB = (sum_s / roh_class_genome_cov) * 1000,
-                   num_mut_per_MB = (num_mut / roh_class_genome_cov) * 1000) %>% 
-            mutate(roh_class = factor(roh_class, levels = c("long", "medium", "short", "outside_roh"))) %>% 
-            mutate(seed = str_replace(run_name, "sheep_", ""))
+            # summarise(sum_s = sum(s, na.rm = TRUE),
+            #           mean_s = mean(s, na.rm = TRUE),
+            #           num_mut = mean(n, na.rm = TRUE)#,
+            #           #roh_class_genome_cov = sample(roh_class_genome_cov, 1)
+            # ) %>% 
+        
+            # mutate(s_sum_per_MB = (sum_s / roh_class_genome_cov) * 1000,
+            #        num_mut_per_MB = (num_mut / roh_class_genome_cov) * 1000) %>% 
+         
       
       muts_roh_full
       

@@ -134,10 +134,10 @@ make_slim <- function(genome_size = NULL, pop_size1 = NULL, pop_size2 = NULL,
       	
       		for (mut_index in seqAlong(muts)){{
       			out1[out1_index]=paste(c(genome_index, asString(pedigree_id),\\
-muts[mut_index].id, muts[mut_index].position, muts[mut_index].selectionCoeff));
+muts[mut_index].id, muts[mut_index].position, muts[mut_index].selectionCoeff, muts[mut_index].originGeneration));
       			out1_index = out1_index + 1;
       		}}
-      		header1=paste(c("genome_id", "pedigree_id", "mut_id", "pos", "s"));
+      		header1=paste(c("genome_id", "pedigree_id", "mut_id", "pos", "s", "originG"));
       		writeFile("{muts_out}/mutperind_"+simID+".txt", \\
 paste(c(header1, out1), sep="\\n"));
       	}}

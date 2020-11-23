@@ -1,7 +1,7 @@
 library(data.table)
 #library(tidyverse)
 source("scripts/make_slim.R")
-source("scripts/slim3alt_mut_and_roh.R")
+source("scripts/combine_mut_roh.R")
 library(furrr)
 library(future)
 library(glue)
@@ -106,7 +106,8 @@ future_pmap(params_sim, slim_roh, pop_size1)
 # make a safe combine function
 combine_safe <- safely(combine_mut_roh)
 # combine mutations and roh data and calculate length classes
-out <- map(paste0("sheep_", seeds), combine_safe, out_path, roh_cutoff_small = 1560, roh_cutoff_long = 6250)
+out <- map(paste0("sheep_", seeds), combine_safe, out_path, 
+           roh_cutoff_small = 1560, roh_cutoff_long = 6250)
 
 # extract only non-error runs and combine
 mut_df <- out %>% 
