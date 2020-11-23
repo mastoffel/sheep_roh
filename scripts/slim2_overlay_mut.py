@@ -77,7 +77,7 @@ ind_names=[0] * n_dip_indv
 for i in range(n_dip_indv):
       ind_names[i] = mutated.individual(i).metadata.pedigree_id
 
-ind_names_sub = random.sample(ind_names, 200)
+#ind_names_sub = random.sample(ind_names, 200)
 
 #indv_names = [f"tsk_{str(i)}indv" for i in range(n_dip_indv)]
 indv_names = [f"tsk_{str(i)}indv" for i in ind_names]

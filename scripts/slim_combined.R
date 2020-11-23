@@ -81,7 +81,7 @@ seeds <- sample(1:1e5, num_sim_per_parset * nrow(params))
 params_sim <- params[rep(1:nrow(params), each =num_sim_per_parset), ] %>% 
                mutate(seed = seeds)
 
-plan(multiprocess, workers = 20)
+plan(multiprocess, workers = 10)
 # make all roh and trees files and recapitate
 future_pmap(params_sim, slim_roh, pop_size1)
 
