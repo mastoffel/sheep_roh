@@ -2,14 +2,15 @@
 
 #$ -V
 #$ -cwd
-#$ -N slim_const_200
+#$ -N slim_1000200
 #$ -o o_files/
 #$ -e e_files/
 
-SCRATCH=/scratch/$USER/$JOB_ID/slim200const
+
+SCRATCH=/scratch/$USER/$JOB_ID/slim1000200
 mkdir -p $SCRATCH
 
-Rscript scripts/slim_combined.R $SCRATCH 200 200
+Rscript scripts/slim_sims_pipeline.R $SCRATCH 1000 200
 
 rsync -av $SCRATCH slim_sim/
 
