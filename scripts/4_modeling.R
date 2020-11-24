@@ -59,9 +59,14 @@ tab_model(mod,show.r2 = FALSE, show.icc = FALSE, auto.label = TRUE, transform = 
 
 
 
-# model weight
-juv_weight <- fitness_data %>% 
-   filter_at(vars(survival, froh_all, sheep_year, birth_year, mum_id, weight, hindleg), ~ !is.na(.)) %>% 
+
+
+# test purging by splitting population in two
+
+# survival data preprocessing
+juv_survival <- fitness_data %>% 
+   filter(age == 0) %>% 
+   filter_at(vars(survival, froh_all, sheep_year, birth_year, mum_id), ~ !is.na(.)) %>% 
    mutate(age_std = as.numeric(scale(age)),
           age_std2 = age_std^2,
           froh_all_cent =    froh_all - mean(froh_all, na.rm = TRUE),
@@ -72,16 +77,44 @@ juv_weight <- fitness_data %>%
           froh_long_std = as.numeric(scale(froh_long)),
           # hom_std = as.numeric(scale(hom1_all))) %>% 
           froh_medium_cent = froh_medium - mean(froh_medium, na.rm = TRUE),
-          froh_medium_std = scale(froh_medium)) %>% 
-   filter(age == 0)
+          froh_medium_std = scale(froh_medium)) 
 
-mod <- lmer(weight ~ froh_long_std + froh_medium_std + froh_short_std  + sex + twin + (1|mum_id) + (1|birth_year), 
-            data = juv_weight)
+juv_survival_early <- juv_survival %>% 
+   filter(as.numeric(as.character(birth_year)) >= 1990 &
+             as.numeric(as.character(birth_year)) < 2000) 
 
+juv_survival_medium <- juv_survival %>% 
+   filter(as.numeric(as.character(birth_year)) > 2000 &
+             as.numeric(as.character(birth_year)) < 2007 ) 
+
+juv_survival_late <- juv_survival %>% 
+   filter(as.numeric(as.character(birth_year)) > 2007) 
+
+mod1 <- glmer(survival ~ froh_all + sex + twin + (1|mum_id) + (1|birth_year), 
+             family = binomial, data = juv_survival_early,
+             control = glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+tidy(mod1, conf.int = TRUE)
+summary(mod1)
+
+mod1 <- glmer(survival ~ froh_all + sex + twin + (1|mum_id) + (froh_all|birth_year), 
+              family = binomial, data = juv_survival,
+              control = glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+tidy(mod1, conf.int = TRUE)
+summary(mod1)
+plot_model(mod1, type = "pred", terms=c("birth_year", "froh_all[0.2, 0.3, 0.4]"), pred.type = "re")
+plot_model(mod1, type = "re")
+
+mod2 <- glmer(survival ~ froh_long_std + froh_medium_std + froh_short_std + sex + twin + (1|mum_id) + (1|birth_year), 
+             family = binomial, data = juv_survival_late,
+             control = glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+tidy(mod2, conf.int = TRUE)
+
+
+juv_survival2 <- juv_survival %>% 
+                     mutate(birth_year = as.numeric(as.character(birth_year))) %>% 
+                     mutate(birth_year = birth_year - min(birth_year))
+
+mod <- glmer(survival ~ froh_all * birth_year + sex + twin + (1|mum_id), 
+             family = binomial, data = juv_survival2,
+             control = glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
 tidy(mod, conf.int = TRUE)
-summary(mod)
-library(sjPlot)
-tab_model(mod,show.r2 = FALSE, show.icc = FALSE, auto.label = TRUE, transform = NULL)
-
-
-

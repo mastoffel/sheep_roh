@@ -2,6 +2,7 @@ library(data.table)
 #library(tidyverse)
 source("scripts/make_slim.R")
 source("scripts/combine_mut_roh.R")
+source("scripts/correct_vcf.R")
 library(furrr)
 library(future)
 library(glue)
@@ -40,6 +41,8 @@ slim_roh <- function(seed, pop_size = pop_size1, ...) {
       system(paste("python3 scripts/slim2_overlay_mut.py", run_name, out_path, pop_size1))
       # eddie
       #system(paste("python scripts/slim2_overlay_mut.py", run_name))
+      # correct vcf
+      correct_vcf(paste0(out_path, "/vcfs/sheep_", seed, ".vcf"))
       
       # call ROH
       # use vcf output to call ROH
@@ -79,7 +82,7 @@ params <- expand.grid(pop_size1, pop_size2, mut1_dom_coeff, mut1_gam_mean, mut1_
               time2 = time1 + 1000)
 
 # try 10 simulation with only weakly deleterious alleles
-num_sim_per_parset <- 2
+num_sim_per_parset <- 100
 set.seed(123)
 seeds <- sample(1:1e5, num_sim_per_parset * nrow(params))
 # replicate each parameter set num_sim_per_parset times
