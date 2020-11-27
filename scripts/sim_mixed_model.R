@@ -1,6 +1,6 @@
 library(lme4)
 library(broom.mixed)
-
+library(tidyverse)
 # froh correlation
 # cor_lm = long, medium
 # cor_ls = long, short
@@ -8,7 +8,7 @@ library(broom.mixed)
 
 # froh slopes: b_long, b_medium, b_short
 
-sim_froh_mod <- function(iter, cor_lm = -0.3, cor_ls = -0.45, cor_ms = -0.03,
+sim_froh_mod <- function(iter, cor_lm = -0.15, cor_ls = -0.45, cor_ms = -0.08,
                          b_long = -0.4, b_medium = -0.2, b_short = -0.1) {
       
       b1 <- b_long
@@ -27,7 +27,10 @@ sim_froh_mod <- function(iter, cor_lm = -0.3, cor_ls = -0.45, cor_ms = -0.03,
       year_eff <- rep(rnorm(n_years, 0, sds), each = sheep_per_year)
       res <- rnorm(n_data, 0, sd)
       
-      cor_mat <- matrix(c(1, cor_lm, cor_ls, cor_lm, 1, cor_ms, cor_ls, cor_ms, 1), ncol = 3)
+      sigma_long <- 3.58
+      sigma_medium <- 1.00
+      sigma_short <- 0.288
+      cor_mat <- matrix(c(sigma_long, cor_lm, cor_ls, cor_lm, sigma_medium, cor_ms, cor_ls, cor_ms, sigma_short), ncol = 3)
       vars <- MASS::mvrnorm(n_data,c(0,0,0), cor_mat)
       froh_long <- vars[, 1]
       froh_medium <- vars[, 2]
@@ -38,29 +41,36 @@ sim_froh_mod <- function(iter, cor_lm = -0.3, cor_ls = -0.45, cor_ms = -0.03,
       resp_bin <- plogis(resp)
       resp_bin <- ifelse(resp_bin >= 0.5, 1, 0)
       
-      df <- data.frame(resp, resp_bin, froh_long, froh_medium, froh_short, birth_year)
+      df <- data.frame(resp, resp_bin, froh_long, froh_medium, froh_short, birth_year) %>% 
+            mutate(froh_long_std = (froh_long - mean(froh_long))/sd(froh_long),
+                   froh_medium_std = (froh_medium - mean(froh_medium))/sd(froh_medium),
+                   froh_short_std = (froh_short - mean(froh_short))/sd(froh_short))
       
       # model gaussian
-      mod <- lmer(resp ~ froh_long + froh_medium + froh_short + (1|birth_year), data = df)
-      tidy(mod)
+      mod1 <- lmer(resp ~ froh_long + froh_medium + froh_short + (1|birth_year),
+                   data = df)
+      mod1_tidy <- tidy(mod1)
       
-      mod <- lmer(resp ~ scale(froh_long) + scale(froh_medium) + scale(froh_short) + (1|birth_year), data = df)
-      tidy(mod)
+      mod2 <- lmer(resp ~ froh_long_std + froh_medium_std + froh_short_std + (1|birth_year), 
+                   data = df)
+      mod2_tidy <- tidy(mod2)
       
+      list(mod1_tidy, mod2_tidy)
       # model bin
       # mod <- glmer(resp_bin ~ froh_long + froh_medium + froh_short + (1|birth_year),
       #              family = "binomial", data = df)
       # tidy(mod)
 }
 
-all_mods <- map_dfr(1:100, sim_froh_mod, cor_lm = -0.3, cor_ls = -0.5, cor_ms = -0.03,
-                                         b_long = -0.4, b_medium = -0.2, b_short = 0, .id = "sim")
+all_mods <- map(1:100, sim_froh_mod)
 
 all_mods %>% 
-      filter(term %in% c("froh_long", "froh_medium", "froh_short")) %>% 
-      ggplot(aes(estimate)) +
-      geom_histogram() +
-      facet_wrap(~term, scale = "free")
+      map(2) %>% 
+      bind_rows() %>% 
+      filter(str_detect(term, "froh")) %>% 
+      ggplot(aes(estimate, fill = term)) +
+      geom_histogram(bins = 50) #+
+      #facet_wrap(~term, scale = "free")
 
 # mod2 <- glmer(resp_bin ~ froh_long + froh_medium + froh_short + (1|birth_year),
 #               family = "binomial", data = df)
