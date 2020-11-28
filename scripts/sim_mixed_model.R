@@ -9,7 +9,7 @@ library(tidyverse)
 # froh slopes: b_long, b_medium, b_short
 
 sim_froh_mod <- function(iter, cor_lm = -0.15, cor_ls = -0.45, cor_ms = -0.08,
-                         b_long = -0.4, b_medium = -0.2, b_short = -0.1) {
+                         b_long = -0.4, b_medium = -0.2, b_short = 0) {
       
       b1 <- b_long
       b2 <- b_medium
@@ -27,11 +27,16 @@ sim_froh_mod <- function(iter, cor_lm = -0.15, cor_ls = -0.45, cor_ms = -0.08,
       year_eff <- rep(rnorm(n_years, 0, sds), each = sheep_per_year)
       res <- rnorm(n_data, 0, sd)
       
+      # calculated from var(juv_survival$froh_long*100) and mean()
       sigma_long <- 3.58
       sigma_medium <- 1.00
       sigma_short <- 0.288
+      mu_long <- 3.67
+      mu_medium <- 12
+      mu_short <- 8.3
+      
       cor_mat <- matrix(c(sigma_long, cor_lm, cor_ls, cor_lm, sigma_medium, cor_ms, cor_ls, cor_ms, sigma_short), ncol = 3)
-      vars <- MASS::mvrnorm(n_data,c(0,0,0), cor_mat)
+      vars <- MASS::mvrnorm(n_data, c(mu_long, mu_medium, mu_short), cor_mat)
       froh_long <- vars[, 1]
       froh_medium <- vars[, 2]
       froh_short <- vars[, 3]
@@ -65,7 +70,7 @@ sim_froh_mod <- function(iter, cor_lm = -0.15, cor_ls = -0.45, cor_ms = -0.08,
 all_mods <- map(1:100, sim_froh_mod)
 
 all_mods %>% 
-      map(2) %>% 
+      map(1) %>% 
       bind_rows() %>% 
       filter(str_detect(term, "froh")) %>% 
       ggplot(aes(estimate, fill = term)) +

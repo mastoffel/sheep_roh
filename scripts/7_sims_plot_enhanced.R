@@ -4,13 +4,14 @@ library(gghalves)
 library(patchwork)
 source("../sheep_ID/theme_simple.R")
 
-mut_df <- read_delim("output/qm_slim/par_combs_popsize1_1000_popsize2_200.txt", " ") %>% 
+mut_df <- read_delim("output/qm_slim/slim1000200_bot/par_combs_popsize1_1000_popsize2_200.txt", " ") %>% 
       mutate(popsize = 1000) 
 
 mut_all <- mut_df %>% 
       #sample_frac(0.001) %>% 
       # filter homozygous sites
       filter(copies == 2) %>% 
+      #filter(s < -0.005) %>% 
       group_by(id, roh_class) %>% 
       #add_count(id, roh_class, name = "num_mut0") %>%
       summarise(sum_s = sum(s, na.rm = TRUE),
@@ -49,7 +50,7 @@ make_plot <- function(ss, axis_title, df) {
       # geom_half_boxplot(side = "l", outlier.color = NA,
       #                   width = 0.5, lwd = 0.5, color = "black",
       #                   alpha = 0.8) +
-      geom_half_violin(side = "l", outlier.color = NA,
+      geom_half_boxplot(side = "l", outlier.color = NA,
                         width = 0.5, lwd = 0.5, color = "black",
                         alpha = 0.8) +
       #stat_summary(fun.y=mean, geom="point", shape=20, size=2, color="red", fill="red") +

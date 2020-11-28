@@ -1,10 +1,12 @@
 library(data.table)
 library(tidyverse)
+source("../sheep_ID/theme_simple.R")
 # roh lenght classes in simulations
 
-roh_paths <- list.files("output/qm_slim/slim1000200/roh", pattern = ".hom$", full.names = TRUE)
+roh_paths <- list.files("output/qm_slim/slim1000200bot/roh", pattern = ".hom$", full.names = TRUE)
 
 roh <- map_dfr(roh_paths, function(x) as_tibble(fread(x)), .id = "run")
+mean(roh$KB)
 
 length_dist <- data.frame(g = c(1, 2,2^2, 2^3, 2^4,2^5,2^6,2^7,2^8,2^9,2^10,2^11,2^12,2^13)) %>%
       mutate(ROH_length_cM = 100 / (2*g))

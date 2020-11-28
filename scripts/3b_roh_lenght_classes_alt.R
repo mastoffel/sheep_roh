@@ -129,8 +129,8 @@ calc_froh_classes <- function(roh_crit, roh_lengths) {
       
       roh_filt <- dplyr::case_when(
             roh_crit == "short"  ~ expr(cM < 1.56),
-            roh_crit == "medium" ~ expr((cM >= 1.56) & (cM < 6.25)),
-            roh_crit == "long"   ~ expr(cM >= 6.25),
+            roh_crit == "medium" ~ expr((cM >= 1.56) & (cM < 12.5)),
+            roh_crit == "long"   ~ expr(cM >= 12.5),
             roh_crit == "all" ~ expr(cM > 0)
       )
       

@@ -8,7 +8,8 @@ library(brms)
 library(ggeffects)
 library(GGally)
 library(sjPlot)
-load("data/fitness_roh3.RData") 
+library(optiSel)
+load("data/fitness_roh2.RData") 
 load("data/sheep_ped.RData")
 ped <- sheep_ped
 
@@ -61,12 +62,10 @@ m1 <- glmer(survival ~ froh_long_std + froh_medium_std + froh_short_std  + sex +
 #mod_out <- tidy(mod, conf.int = TRUE, conf.method = "boot", nsim = 1000)
 tidy(m1, conf.int = TRUE)
 saveRDS(m1, "output/juv_survival_model_std.RDS")
-summary(mod)
-tab_model(mod,show.r2 = FALSE, show.icc = FALSE, auto.label = TRUE, transform = NULL)
+summary(m1)
+tab_model(m1,show.r2 = FALSE, show.icc = FALSE, auto.label = TRUE, transform = NULL)
 
 ggpredict(m1, c("froh_long_std [all]")) 
-
-plot(me)
 
 # no std:
 juv_survival2 <- juv_survival %>% 
@@ -94,11 +93,11 @@ plot_model(m2, terms = c("froh_long", "froh_medium", "froh_short"))
 
 # brm
 mod_brm <- brm(survival ~ froh_long + froh_medium + froh_short  + sex + twin + (1|mum_id) + (1|birth_year), 
-               family = bernoulli(), data = juv_survival2, cores = 4, iter = 5000)
+               family = bernoulli(), data = juv_survival2, cores = 4, iter = 2000)
 
 ggpredict(mod_brm, c("froh_long_std [all]")) 
 brms::conditional_effects(mod_brm)
 me <- brms::conditional_effects(mod_brm, "froh_long_std")
 summary(mod_brm)
-
+plot_model(mod_brm, terms = c("froh_long", "froh_medium", "froh_short"))
 
