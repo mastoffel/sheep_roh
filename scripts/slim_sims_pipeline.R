@@ -2,6 +2,7 @@ library(data.table)
 #library(tidyverse)
 source("scripts/make_slim.R")
 source("scripts/combine_mut_roh.R")
+source("scripts/correct_vcf.R")
 library(furrr)
 library(future)
 library(glue)
@@ -40,6 +41,8 @@ slim_roh <- function(seed, pop_size = pop_size1, ...) {
       system(paste("python3 scripts/slim2_overlay_mut.py", run_name, out_path, pop_size1))
       # eddie
       #system(paste("python scripts/slim2_overlay_mut.py", run_name))
+      # correct vcf
+      correct_vcf(paste0(out_path, "/vcfs/sheep_", seed, ".vcf"))
       
       # call ROH
       # use vcf output to call ROH
@@ -67,7 +70,7 @@ mut1_dom_coeff <- c(0, 0.05, 0.2)
 mut1_gam_mean <- c(-0.01, -0.03, -0.05)
 mut1_gam_shape <- 0.2
 genome_size <- 1e8
-mut_rate_del <- 1e-9
+mut_rate_del <- 3e-9
 recomb_rate <- 1e-8
 
 params <- expand.grid(pop_size1, pop_size2, mut1_dom_coeff, mut1_gam_mean, mut1_gam_shape,
@@ -79,7 +82,7 @@ params <- expand.grid(pop_size1, pop_size2, mut1_dom_coeff, mut1_gam_mean, mut1_
               time2 = time1 + 1000)
 
 # try 10 simulation with only weakly deleterious alleles
-num_sim_per_parset <- 200
+num_sim_per_parset <- 100
 set.seed(123)
 seeds <- sample(1:1e5, num_sim_per_parset * nrow(params))
 # replicate each parameter set num_sim_per_parset times
@@ -107,7 +110,8 @@ future_pmap(params_sim, slim_roh, pop_size1)
 combine_safe <- safely(combine_mut_roh)
 # combine mutations and roh data and calculate length classes
 out <- map(paste0("sheep_", seeds), combine_safe, out_path, 
-           roh_cutoff_small = 1560, roh_cutoff_long = 6250)
+	   roh_cutoff_small = 1560, roh_cutoff_long = 12500)
+          # roh_cutoff_small = 1560, roh_cutoff_long = 6250)
 
 # extract only non-error runs and combine
 mut_df <- out %>% 

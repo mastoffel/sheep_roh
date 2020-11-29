@@ -116,7 +116,11 @@ make_slim <- function(genome_size = NULL, pop_size1 = NULL, pop_size2 = NULL,
       }}
       
       {time1} {{ p1.setSubpopulationSize({pop_size2}); }}
-      
+      10969 {{ p1.setSubpopulationSize(10); }}
+      10970:10990 {{ 
+	 	newSize = asInteger(round(1.1534^(sim.generation - 10969) * 10));
+		p1.setSubpopulationSize(newSize);
+       }}
       {time2} late() {{
       
       	// tree sequence recording for 
