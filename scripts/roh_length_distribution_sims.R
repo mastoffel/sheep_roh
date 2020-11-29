@@ -3,7 +3,7 @@ library(tidyverse)
 source("../sheep_ID/theme_simple.R")
 # roh lenght classes in simulations
 
-roh_paths <- list.files("output/qm_slim/slim1000200bot/roh", pattern = ".hom$", full.names = TRUE)
+roh_paths <- list.files("output/qm_slim/slim1000200_bot/roh/", pattern = ".hom$", full.names = TRUE)
 
 roh <- map_dfr(roh_paths, function(x) as_tibble(fread(x)), .id = "run")
 mean(roh$KB)
@@ -68,3 +68,31 @@ p_roh_dist <- IBD_df_with_0 %>%
             axis.text = element_text(color = "black")) + 
       xlab("ROH classes in cM") 
 p_roh_dist 
+
+
+ibd <- IBD_df_with_0 %>% 
+   mutate(three_classes = case_when(
+      (class == 1) | (class == 2) ~ "long",
+      (class > 2) & (class <= 5) ~ "medium",
+      (class > 5) ~ "short",
+   ))
+
+ibd %>% 
+   ungroup() %>% 
+   #mutate(prop_IBD = prop_IBD / 10) %>% 
+   ggplot(aes(three_classes, prop_IBD, fill = three_classes)) +
+   geom_half_point(side = "l", shape = 21, alpha = 0.5, stroke = 0.1, size =2,
+                   transformation_params = list(height = 0, width = 1.3, seed = 1)) +
+   geom_half_boxplot(side = "r", outlier.color = NA,
+                     width = 0.6, lwd = 0.3, color = "black",
+                     alpha = 0.8) +
+   theme_simple(axis_lines = TRUE, grid_lines = FALSE, base_size = 13) +
+   ylab("% genome") +
+   # scale_y_continuous(labels = c("0", "5", "10"), breaks = c(0, 0.05, 0.1)) +
+   scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+   scale_fill_manual(values = col_pal, name = "ROH class (Mb)") +
+   theme(legend.position = "none",
+         #axis.ticks.x = element_blank(),
+         axis.title=element_text(size = rel(1.1)), 
+         axis.text = element_text(color = "black")) + 
+   xlab("ROH classes in cM") 
