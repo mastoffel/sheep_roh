@@ -9,14 +9,14 @@ mut_df <- read_delim("output/qm_slim/slim1000200_bot_3e9/par_combs_popsize1_1000
                      n_max = 1000) %>% 
       mutate(popsize = 1000) 
 
-mut_df <- vroom("output/qm_slim/slim1000200_bot_3e9/par_combs_popsize1_1000_popsize2_200.txt")
+#mut_df <- vroom("output/qm_slim/slim1000200_bot_3e9/par_combs_popsize1_1000_popsize2_200.txt")
 
-mut_df <- fread("output/qm_slim/slim1000200_bot_3e9/par_combs_popsize1_1000_popsize2_200.txt")
+mut_df <- fread("output/qm_slim/slim1000200_bot_7030del/par_combs_popsize1_1000_popsize2_200.txt")
 mut_all <- mut_df %>% 
       #sample_frac(0.001) %>% 
       # filter homozygous sites
       filter(copies == 2) %>%
-      filter(mut1_gam_mean == -0.03, mut1_dom_coeff == 0.05) %>% 
+      #filter(mut1_gam_mean == -0.03, mut1_dom_coeff == 0.05) %>% 
       #filter(s < -0.005) %>% 
       group_by(id, roh_class) %>% 
       #add_count(id, roh_class, name = "num_mut0") %>%
@@ -51,18 +51,19 @@ mut_sub <- mut_p %>%
 make_plot <- function(ss, axis_title, df) {
    ss <- ensym(ss)
    p <- ggplot(df, aes(roh_class, !!ss, fill = roh_class)) +
-      geom_half_point(side = "r", shape = 21, alpha = 0.5, stroke = 0.1, size = 2) +
-      #  transformation_params = list(height = 0, width = 1.3, seed = 1)
-      # geom_half_boxplot(side = "l", outlier.color = NA,
-      #                   width = 0.5, lwd = 0.5, color = "black",
-      #                   alpha = 0.8) +
+      geom_half_point(side = "r", shape = 21, alpha = 0.3, stroke = 0.1, 
+                      size = 2,  width = 0.5) +
       geom_half_boxplot(side = "l", outlier.color = NA,
                         width = 0.5, lwd = 0.5, color = "black",
-                        alpha = 0.8, notch = TRUE) +
-      #stat_summary(fun.y=mean, geom="point", shape=20, size=2, color="red", fill="red") +
-      scale_fill_viridis_d("ROH length class", direction = -1,
-                           guide = guide_legend(reverse = TRUE),
-                           labels=rev(c("long (>6.25cM)", "medium (1.56cM - 6.25cM)", "short (<1.56cM)"))) +
+                        alpha = 0.8, notch = FALSE) +
+      scale_fill_viridis_d("ROH length class", direction = -1, option = "D",
+                         guide = guide_legend(reverse = TRUE),
+                         labels=rev(c("long (>12.5cM | < 4g)", 
+                                      "medium (>1.56cM | 4-32g)", 
+                                      "short (>0.39cM | 32-128g)"))) +
+     # scale_fill_manual("ROH length class", values = c("#D9B08C","#116466","#2C3531"),
+     #                      guide = guide_legend(reverse = TRUE),
+     #                      labels=rev(c("long (>12.5cM | < 4g)", "medium (>1.56cM | < 32g)", "short (>0.39cM | <128g)"))) +
       #scale_x_discrete(labels = c(expression(ROH[long]),expression(ROH[medium]), expression(ROH[short]))) +
       theme_simple(grid_lines = FALSE, axis_lines = TRUE,  base_size = 12) +
       ylab(axis_title) +
@@ -85,18 +86,18 @@ p2 <- make_plot(mean_freq,"Mutation frequency", mut_sub)
 p3 <- make_plot(num_mut_per_MB, "Number of mutations per cM", mut_sub)
 p4 <- make_plot(mean_origin,"Mutation age in generations", mut_sub)
 p_final <- p1 + p2 + p3 + p4 + 
-   plot_layout(guides = 'collect') +
-   plot_annotation(tag_levels = 'a')
+   plot_layout(guides = 'collect') #+
+  # plot_annotation(tag_levels = 'a')
 p_final
 
-ggsave(filename = "figs/Fig2_gen4_32_3e9.jpg", width = 7, height = 4.5)
+ggsave(plot = p_final, filename = "figs/Fig2_gen4_32_7030.jpg", width = 7, height = 4.5)
 
 
 
 
 
 ggplot(mut_sub, aes(roh_class, s_sum_per_MB, fill = roh_class)) +
-   geom_line(mapping = aes(group = seed), size = 0.2, alpha = 0.2) +
+   geom_line(mapping = aes(group = seed), size = 0.2, alpha = 0.1) +
    geom_half_point(side = "r", shape = 21, alpha = 0.5, stroke = 0.1, size = 2) +
    geom_half_boxplot(side = "l", outlier.color = NA,
                      width = 0.5, lwd = 0.5, color = "black",

@@ -5,7 +5,7 @@ library(gghalves)
 library(janitor)
 library(sjPlot)
 library(patchwork)
-load("data/fitness_roh3.RData") 
+load("data/fitness_roh.RData") 
 # first year survival model
 mod <- readRDS("output/juv_survival_model_nonstd.RDS")
 summary(mod)
@@ -29,20 +29,21 @@ juv_survival <- fitness_data %>%
 p_dist <- juv_survival %>% 
    pivot_longer(cols = froh_long:froh_short, names_to = "roh_class", 
                 values_to = "froh") %>% 
+   mutate(roh_class = factor(roh_class, levels = rev(c("froh_long", "froh_medium", "froh_short")))) %>% 
    select(roh_class, froh) %>% 
- #  mutate(roh_class = factor(roh_class, levels = rev(c("long", "medium",
-   #                                                   "short")))) %>% 
    mutate(froh = 100*froh) %>% 
    ggplot(aes(roh_class, froh, fill = roh_class)) +
-      geom_half_point(side = "r", shape = 21, alpha = 0.6, stroke = 0.3, size =2, color = "#2E3440",
-                      transformation_params = list(height = 0, width = 1.3, seed = 1)) +
+      geom_half_point(side = "r", shape = 21, alpha = 0.1, stroke = 0.3, size = 2, color = "#2E3440") +
       geom_half_boxplot(side = "l", outlier.color = NA,
                         width = 0.5, lwd = 0.5, color = "#2E3440",
                         alpha = 0.8) +
-      scale_fill_viridis_d(direction = 1) +
+      scale_fill_viridis_d(direction = -1) +
       #ylab("Selection coefficient per cM") +
-      scale_x_discrete(labels = rev(c(expression(ROH[long]),expression(ROH[medium]), expression(ROH[short])))) +
+      scale_x_discrete(labels = rev(c(expression(paste(F[ROH[long]], "(>12.5cM | <4g)")),
+                                      expression(paste(F[ROH[medium]], "(1.56 - 12.5cM | 4-32g)")),
+                                      expression(paste(F[ROH[short]] ~ "(>1.56g | >32g)"))))) +
       theme_simple(grid_lines = FALSE, axis_lines = TRUE,  base_size = 12) +
+      ylab("% genome") + 
       #ggtitle("Simulation") +
       theme(
          panel.grid.major = element_blank(),
@@ -50,29 +51,36 @@ p_dist <- juv_survival %>%
          axis.line.y = element_blank(),
          axis.ticks.y = element_blank(),
          axis.title.y = element_blank(),
+         axis.text.y = element_blank(),
          legend.position = "none",
          axis.title.x = element_text(size = 12),
          axis.text = element_text(color = "black", size = 12)
-      )# +
-     # coord_flip()
-
+      ) +
+      coord_flip()
+p_dist
 # Model and CIs
 mod_sum <- tidy(mod, conf.int = TRUE) #  conf.method = "boot", nsim = 1000
 
 mod_sum_filt <- mod_sum %>% 
       clean_names() %>% 
       filter(str_detect(term, "froh")) %>% 
-     # mutate(across(.cols = c("estimate", "conf_low", "conf_high"), exp)) %>% 
+      mutate(across(.cols = c("estimate", "conf_low", "conf_high"), exp)) %>% 
       mutate(term = fct_rev(factor(term)))
 
 p1 <- ggplot(mod_sum_filt, aes(estimate, term, xmax = conf_high, xmin = conf_low, color = term, fill = term)) +
-      geom_vline(xintercept = 0, linetype='dashed', size = 0.3) +  #colour =  "#4c566a",   # "#4c566a"  "#eceff4"
+      geom_vline(xintercept = 1, linetype='dashed', size = 0.3) +  #colour =  "#4c566a",   # "#4c566a"  "#eceff4"
       geom_errorbarh(alpha = 1, height = 0, size = 1) +
       geom_point(size = 3.5, shape = 21, #col = "#4c566a", #fill = "#eceff4", # "grey69"
                  alpha = 1, stroke = 0.3) + 
-      scale_y_discrete(labels = rev(c(expression(F[ROH[long]]~"">12.5~cM),
-                                      expression(F[ROH[medium]]~3.13 - 12.5~cM), 
-                                      expression(F[ROH[short]]~""<3.13~cM)))) +
+      # scale_y_discrete(labels = rev(c(expression(F[ROH[long]]~"">12.5~cM),
+      #                                 expression(F[ROH[medium]]~1.56 - 12.5~cM),
+      #                                 expression(F[ROH[short]]~""<1.56~cM)))) +
+      # scale_y_discrete(labels = rev(c(expression(paste(F[ROH[long]], "(>12.5cM | <4g)")),
+      #                             expression(paste(F[ROH[medium]], "(1.56 - 12.5cM | 4-32g)")),
+      #                             expression(paste(F[ROH[short]] ~ "(>1.56g | >32g)"))))) +
+      scale_y_discrete(labels = rev(c(expression(atop(F[ROH[long]], "(>12.5cM | <4g)")),
+                                   expression(atop(F[ROH[medium]], "(1.56-12.5cM | 4-32g)")),
+                                   expression(atop(F[ROH[short]], "(<1.56cM | >32g)"))))) +
      # ggtitle("Empirical analysis") +
       theme_simple(axis_lines = TRUE, base_size = 12) +
       scale_fill_viridis_d(direction = -1) +
@@ -83,19 +91,20 @@ p1 <- ggplot(mod_sum_filt, aes(estimate, term, xmax = conf_high, xmin = conf_low
             axis.line.y = element_blank(),
             axis.ticks.y = element_blank(),
             axis.title.y = element_blank(),
+            axis.text.y = element_text(hjust=0.5),
             legend.position = "none",
             axis.text = element_text(color = "black", size = 12),
             axis.title.x = element_text(size = 12)
       ) +
-      xlab("log odds-ratio and 95% CI")
+      xlab("Odds-ratio and 95% CI")
 p1
-ggsave("figs/Fig1_simple.jpg", p1, width = 5, height = 3)
+ggsave("figs/Fig1_simple.jpg", p1, width = 6, height = 3)
 
-dat <- as_tibble(ggpredict(mod, terms = c("froh_long [all]"))) %>% 
-         bind_rows(as_tibble(ggpredict(mod, terms = c("froh_medium [all]"))))
+library(patchwork)
+p_final <- p_dist + p1 + plot_annotation(tag_levels = "a")
+p_final
 
-plot(dat, one_plot = TRUE)
-
+ggsave("figs/Fig1.jpg", p_final, width = 7, height = 3)
 
 
  # load simulated data
