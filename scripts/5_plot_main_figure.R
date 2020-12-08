@@ -5,9 +5,12 @@ library(gghalves)
 library(janitor)
 library(sjPlot)
 library(patchwork)
+library(tidybayes)
+library(bayesplot)
+library(brms)
 load("data/fitness_roh.RData") 
 # first year survival model
-mod <- readRDS("output/juv_survival_model_nonstd.RDS")
+mod <- readRDS("output/juv_survival_model_nonstd_brm.RDS")
 summary(mod)
 
 juv_survival <- fitness_data %>% 
@@ -58,6 +61,91 @@ p_dist <- juv_survival %>%
       ) +
       coord_flip()
 p_dist
+
+
+# 
+# brm model
+post <- posterior_samples(mod, pars = c("froh_long" ,"froh_medium", "froh_short"))
+
+p_emp <- post %>% 
+   pivot_longer(cols = starts_with("b"), names_to = "froh", values_to = "beta") %>% 
+   mutate(beta = exp(beta),
+          froh =  fct_rev(factor(froh))) %>% 
+   ggplot(aes(beta, froh, color = froh)) +
+   geom_vline(xintercept = 1, linetype='dashed', size = 0.3) +
+   stat_slab(alpha = 0.6, slab_type = "pdf", height = 0.7, size = 0.4,  fill = "#ECEFF4") +
+   stat_pointinterval(.width = c(.95), point_size = 3) +
+   scale_x_continuous(breaks = c(.8, 1, 1.2, 1.4)) + 
+   scale_y_discrete(labels = rev(c(expression(atop(F[ROH[long]], "(>12.5cM | <4g)")),
+                                   expression(atop(F[ROH[medium]], "(1.56-12.5cM | 4-32g)")),
+                                   expression(atop(F[ROH[short]], "(<1.56cM | >32g)"))))) +
+   # ggtitle("Empirical analysis") +
+   theme_simple(axis_lines = TRUE, base_size = 12) +
+   #scale_fill_viridis_d(direction = -1) +
+   scale_color_viridis_d(direction = -1) +
+   theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      axis.line.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      axis.title.y = element_blank(),
+      axis.text.y = element_text(hjust=0.5),
+      legend.position = "none",
+      axis.text = element_text(color = "black", size = 12),
+      axis.title.x = element_text(size = 12)
+   ) +
+   xlab("Odds-ratio and 95% CI")
+
+
+library(patchwork)
+p_final <- p_dist + p_emp + plot_annotation(tag_levels = "a") +
+   plot_layout(widths = c(1.5, 2)) +
+   theme(plot.tag.position = c(0.36, 0.94),
+         plot.tag = element_text( hjust = 0, vjust = 0))
+p_final
+
+ggsave("figs/Fig1_bayes.jpg", p_final, width = 7, height = 3)
+
+
+# figure of differences
+p_sup <- post %>% 
+   mutate(d_long_medium = b_froh_long - b_froh_medium,
+          d_long_short = b_froh_long - b_froh_short,
+          d_medium_short = b_froh_medium - b_froh_short) %>% 
+   pivot_longer(cols = starts_with("d"), names_to = "froh", values_to = "beta") %>% 
+   mutate(froh =  fct_rev(factor(froh))) %>% 
+   ggplot(aes(beta, froh, fill = froh)) +
+   geom_vline(xintercept = 0, linetype='dashed', size = 0.3 ) +
+   stat_slab(alpha = 0.6, slab_type = "pdf", height = 0.7, size = 0.4, color = "#3B4252", fill = "#ECEFF4") +
+   stat_pointinterval(.width = c(.95), point_size = 3, color = "#3B4252") +
+   #scale_x_continuous(limits = c(0.73, 1.47)) + 
+   scale_y_discrete(labels = rev(c(expression(beta[F[ROHlong]] - beta[F[ROHmedium]]),
+                                   expression(beta[F[ROHlong]] - beta[F[ROHshort]]),
+                                   expression(beta[F[ROHmedium]] - beta[F[ROHshort]])))) +
+   # ggtitle("Empirical analysis") +
+   theme_simple(axis_lines = TRUE, base_size = 12) +
+   theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      axis.line.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      axis.title.y = element_blank(),
+      axis.text.y = element_text(hjust=0.5),
+      legend.position = "none",
+      axis.text = element_text(color = "black", size = 12),
+      axis.title.x = element_text(size = 12)
+   ) +
+   xlab(expression(Delta~log~odds~ratio~and~'95%'~CI)) # "log odds-ratio and 95% CI"
+
+ggsave("figs/Sup_fig1_bayes_diff.jpg", p_sup, width = 4, height = 2.7)
+
+
+
+
+
+
+
+
 # Model and CIs
 mod_sum <- tidy(mod, conf.int = TRUE) #  conf.method = "boot", nsim = 1000
 
@@ -101,10 +189,87 @@ p1
 ggsave("figs/Fig1_simple.jpg", p1, width = 6, height = 3)
 
 library(patchwork)
-p_final <- p_dist + p1 + plot_annotation(tag_levels = "a")
+p_final <- p_dist + p1 + plot_annotation(tag_levels = "a") +
+   theme(plot.tag.position = c(0.36, 0.94),
+         plot.tag = element_text( hjust = 0, vjust = 0))
 p_final
 
 ggsave("figs/Fig1.jpg", p_final, width = 7, height = 3)
+
+
+
+# brm model
+post <- posterior_samples(mod, pars = c("froh_long" ,"froh_medium", "froh_short"))
+post %>% 
+   pivot_longer(cols = starts_with("b"), names_to = "froh", values_to = "beta") %>% 
+   mutate(beta = exp(beta),
+          froh =  fct_rev(factor(froh))) %>% 
+   ggplot(aes(beta, froh, fill = froh)) +
+   geom_vline(xintercept = 1, linetype='dashed', size = 0.3) +
+   stat_slab(alpha = 0.6, slab_type = "pdf", height = 0.5) +
+   stat_pointinterval(.width = c(.50,.90)) +
+   scale_x_continuous(limits = c(0.73, 1.47)) + 
+   scale_y_discrete(labels = rev(c(expression(atop(F[ROH[long]], "(>12.5cM | <4g)")),
+                                   expression(atop(F[ROH[medium]], "(1.56-12.5cM | 4-32g)")),
+                                   expression(atop(F[ROH[short]], "(<1.56cM | >32g)"))))) +
+   # ggtitle("Empirical analysis") +
+   theme_simple(axis_lines = TRUE, base_size = 12) +
+   scale_fill_viridis_d(direction = -1) +
+   scale_color_viridis_d(direction = -1) +
+   theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      axis.line.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      axis.title.y = element_blank(),
+      axis.text.y = element_text(hjust=0.5),
+      legend.position = "none",
+      axis.text = element_text(color = "black", size = 12),
+      axis.title.x = element_text(size = 12)
+   ) +
+   xlab("Odds-ratio and 95% CI")
+
+post %>% 
+   mutate(d_long_medium = b_froh_long - b_froh_medium,
+          d_long_short = b_froh_long - b_froh_short,
+          d_medium_short = b_froh_medium - b_froh_short) %>% 
+   pivot_longer(cols = starts_with("d"), names_to = "froh", values_to = "beta") %>% 
+   mutate(beta = exp(beta),
+          froh =  fct_rev(factor(froh))) %>% 
+   ggplot(aes(beta, froh, fill = froh)) +
+   geom_vline(xintercept = 1, linetype='dashed', size = 0.3) +
+   stat_slab(alpha = 0.6, slab_type = "pdf", height = 0.5) +
+   stat_pointinterval(.width = c(.50,.90)) +
+   scale_x_continuous(limits = c(0.73, 1.47)) + 
+   scale_y_discrete(labels = rev(c(expression(atop(F[ROH[long]], "(>12.5cM | <4g)")),
+                                   expression(atop(F[ROH[medium]], "(1.56-12.5cM | 4-32g)")),
+                                   expression(atop(F[ROH[short]], "(<1.56cM | >32g)"))))) +
+   # ggtitle("Empirical analysis") +
+   theme_simple(axis_lines = TRUE, base_size = 12) +
+   scale_fill_viridis_d(direction = -1) +
+   scale_color_viridis_d(direction = -1) +
+   theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      axis.line.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      axis.title.y = element_blank(),
+      axis.text.y = element_text(hjust=0.5),
+      legend.position = "none",
+      axis.text = element_text(color = "black", size = 12),
+      axis.title.x = element_text(size = 12)
+   ) +
+   xlab("Odds-ratio and 95% CI")
+
+
+
+
+
+
+
+
+
+
 
 
  # load simulated data

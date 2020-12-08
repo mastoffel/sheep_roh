@@ -9,7 +9,7 @@ library(ggeffects)
 library(GGally)
 library(sjPlot)
 library(optiSel)
-load("data/fitness_roh2.RData") 
+load("data/fitness_roh.RData") 
 load("data/sheep_ped.RData")
 ped <- sheep_ped
 
@@ -100,10 +100,26 @@ tidy(m3, conf.int = TRUE)
 
 
 # brm
-mod_brm <- brm(survival ~ froh_long + froh_medium + froh_short  + sex + twin + (1|mum_id) + (1|birth_year), 
-               family = bernoulli(), data = juv_survival2, cores = 4, iter = 5000)
+juv_survival2 <- juv_survival %>% 
+   mutate(froh_long = (froh_long-mean(froh_long)) * 100,
+          froh_medium = (froh_medium-mean(froh_medium))*100,
+          froh_short = (froh_short - mean(froh_short)) *100,
+          froh_all = (froh_all * 100))
+
+brm_fit <- brm(survival ~ froh_long + froh_medium + froh_short  + sex + twin + (1|mum_id) + (1|birth_year), 
+               family = bernoulli(), data = juv_survival2, cores = 4, iter = 10000,
+               set_prior("normal(0,5)", class = "b"))
+
+saveRDS(brm_fit, "output/juv_survival_model_nonstd_brm.RDS")
+
+summary(brm_fit)
+plot(brm_fit, ask = FALSE)
+loo(brm_fit)
+pp_check(brm_fit, nsamples = 100 )
 summary(mod_brm)
-conditional_effects(mod_brm)
+conditional_effectnsamples = s(mod_brm)
+
+check_model(brm_fit)
 
 plot(mod_brm)
 ggpredict(mod_brm, c("froh_long_std [all]")) 
