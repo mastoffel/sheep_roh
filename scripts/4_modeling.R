@@ -111,7 +111,8 @@ brm_fit <- brm(survival ~ froh_long + froh_medium + froh_short  + sex + twin + (
                set_prior("normal(0,5)", class = "b"))
 
 saveRDS(brm_fit, "output/juv_survival_model_nonstd_brm.RDS")
-
+brm_fit <- readRDS("output/juv_survival_model_nonstd_brm.RDS")
+prior_summary(brm_fit)
 summary(brm_fit)
 plot(brm_fit, ask = FALSE)
 loo(brm_fit)

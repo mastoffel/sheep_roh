@@ -2,6 +2,12 @@
 # original params genome_size = 1e8, pop_size1 = 5000, pop_size2 = 200, 
 #  time1 = 10000, time2 = 11000,  mut_rate_del = 1e-9, recomb_rate = 1.27e-8,
 #    mut1_gam_shape = 0.2,
+
+# 10969 {{ p1.setSubpopulationSize(10); }}
+# 10970:10990 {{
+#          newSize = asInteger(round(1.1534^(sim.generation - 10969) * 10));
+#          p1.setSubpopulationSize(newSize);
+#  }}
 make_slim <- function(genome_size = NULL, pop_size1 = NULL, pop_size2 = NULL, 
                       time1 = NULL, time2 = NULL,
                       mut_rate_del = NULL, recomb_rate = NULL,

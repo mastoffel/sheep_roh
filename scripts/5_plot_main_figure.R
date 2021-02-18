@@ -94,7 +94,7 @@ p_emp <- post %>%
       axis.text = element_text(color = "black", size = 12),
       axis.title.x = element_text(size = 12)
    ) +
-   xlab("Odds-ratio and 95% CI")
+   xlab("Odds-ratio and 95% CI\n(First-year survival)")
 
 
 library(patchwork)
@@ -138,6 +138,38 @@ p_sup <- post %>%
    xlab(expression(Delta~log~odds~ratio~and~'95%'~CI)) # "log odds-ratio and 95% CI"
 
 ggsave("figs/Sup_fig1_bayes_diff.jpg", p_sup, width = 4, height = 2.7)
+
+
+# TABLE
+pred_names = c(Intercept = "Intercept", froh_long = "FROHlong", 
+               froh_medium = "FROHmedium", froh_short = "FROHshort",
+               sexM = "Sex [0=Male, 1=Female]", twin1 = "Twin [0=singleton, 1=twin]", 
+               birth_year = "Birth year", 
+               mum_id = "Mother ID")
+
+tab_model(mod, pred.labels = pred_names,
+          show.r2 = FALSE, show.icc = FALSE)
+
+tidy_mod <- tidy(mod) %>% 
+               select(term:conf.high) %>% 
+               mutate(term = c("Intercept", 
+                               "F<sub>ROHlong</sub>",
+                               "F<sub>ROHmedium</sub>",
+                               "F<sub>ROHshort</sub>",
+                               "Sex",
+                               "Twin",
+                               "Birth year",
+                               "Mother ID")) %>% 
+               mutate(add_info = c("", rep("continuous", 3), 
+                                   "categorical (0=male, 1=female)",
+                                   "categorical (0=singleton, 1=twin)",
+                                   "n = 1118",
+                                   "n = 39")) %>% 
+               mutate(effect = c(rep("Population level (fixed) effect", 6),
+                                 rep("Group level (random) effect"))) %>% 
+                                    
+               
+
 
 
 
