@@ -5,6 +5,8 @@ library(snpStats)
 library(GGally)
 library(gghalves)
 library(furrr)
+library(qtl)
+library(furrr)
 source("../sheep_ID/theme_simple.R")
 
 # make ped file to replace with genetic distances
@@ -33,9 +35,78 @@ map_cM_sex_av <- map_file %>%
                   # trick plink by giving cM position to bp
                   mutate(bp = cM * 1e6) %>% 
                   select(-cMPosition)
+
 write_delim(map_cM_sex_av, path = "data/sheep_geno_imputed_oar31_17052020_cM.map", 
                               delim = "\t", col_names = FALSE)
-                  
+
+
+## create interpolated map, where constant recombination rate is assumed
+map_cM <- map_file %>% 
+   left_join(lmap[c("chr", "snp", "cMPosition")]) %>% 
+   mutate(org_map = ifelse(!is.na(cMPosition), TRUE, FALSE),
+          index = 1:nrow(.))
+
+intpol_cM <- function(row, map) {
+   # current SNP
+   row_cur <- map[row, ]
+   
+   # return row if SNP is on genetic map
+   if (!is.na(row_cur$cMPosition)) return(row_cur)
+   
+   # start of chromosome
+   if (row < min(which(map$org_map))) {
+      row_cur$cMPosition <- 0
+      return(row_cur)
+   }
+   # if not start, lmap position before
+   row_before <- map %>% 
+                  filter((index < row) & org_map) %>% 
+                  filter(index == max(index)) 
+   
+   # end of chromosome
+   if (row > max(which(map$org_map))) {
+      row_cur$cMPosition <- row_before$cMPosition
+      return(row_cur)
+   }
+   
+   # if not end, lmap position after
+   row_next <- map %>% 
+                filter((index > row) & org_map) %>% 
+               filter(index == min(index)) 
+   
+   # if flanking SNPs have the same cM position
+   if (row_before$cMPosition == row_next$cMPosition) {
+      row_cur$cMPosition <- row_before$cMPosition
+      return(row_cur)
+   }
+   
+   # interpolate if nothing of the above is true
+   diff_bp <- row_next$bp - row_before$bp
+   diff_cM <- row_next$cMPosition - row_before$cMPosition
+   
+   row_cur$cMPosition <- row_before$cMPosition + (row_cur$bp - row_before$bp)/diff_bp * diff_cM
+   return(row_cur)
+}
+
+plan(multisession, workers = 6)
+map_cM_sex_av <- future_map(1:nrow(map_cM), intpol_cM, map_cM) %>% 
+                  bind_rows()
+
+write_delim(map_cM_sex_av, file = "data/sheep_geno_imputed_oar31_17052020_cM.map", 
+            delim = "\t", col_names = FALSE)
+
+print(map_cM_sex_av, n = 100)
+
+# 
+map_js <- read_delim("~/Downloads/Oar3.1_Interpolated.txt", delim = "\t")
+map_cM_sex_av2 <- map_cM_sex_av
+map_cM_sex_av2$bp <- map_js$cM * 1e6
+write_delim(map_cM_sex_av2, path = "data/sheep_geno_imputed_oar31_17052020_cM.map", 
+            delim = "\t", col_names = FALSE)
+
+ind <- which(map_js$SNP.Name == "OAR1_68758775.1", )
+print(map_js[ind:(ind+50), ], n = 40)
+
 # join and interpolate cM positions (female)
 map_cM_female <- map_file %>% 
       left_join(lmap[c("chr", "snp", "cMPosition.Female")]) %>% 

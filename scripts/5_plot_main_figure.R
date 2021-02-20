@@ -9,6 +9,7 @@ library(tidybayes)
 library(bayesplot)
 library(brms)
 load("data/fitness_roh.RData") 
+library(gt)
 # first year survival model
 mod <- readRDS("output/juv_survival_model_nonstd_brm.RDS")
 summary(mod)
@@ -150,6 +151,7 @@ pred_names = c(Intercept = "Intercept", froh_long = "FROHlong",
 tab_model(mod, pred.labels = pred_names,
           show.r2 = FALSE, show.icc = FALSE)
 
+
 tidy_mod <- tidy(mod) %>% 
                select(term:conf.high) %>% 
                mutate(term = c("Intercept", 
@@ -165,10 +167,21 @@ tidy_mod <- tidy(mod) %>%
                                    "categorical (0=singleton, 1=twin)",
                                    "n = 1118",
                                    "n = 39")) %>% 
-               mutate(effect = c(rep("Population level (fixed) effect", 6),
-                                 rep("Group level (random) effect"))) %>% 
+               mutate(effect = c("", rep("Population level/fixed effects", 5),
+                                 rep("Group level/random effects (standard deviation)", 2))) %>% 
+               select(7, 1:6) %>% 
+               mutate_if(is.numeric, function(x) paste0(round(x, 3)," (",round(exp(x), 3), ")")) %>% 
+               setNames(c("effect", "Term", "Post.Mean", "Std.Error", "CI (2.5%)", "CI (97.5%)", "Info"))
                                     
-               
+tidy_mod %>% gt(
+   rowname_col = "term",
+   groupname_col = "effect") %>% 
+   tab_style(
+      style = cell_text( weight = "bold"),
+      locations = cells_column_labels(columns = TRUE)
+   ) %>% 
+   fmt_markdown(columns = TRUE) %>% 
+   gtsave("JS_model_table.png", path = "tables/")
 
 
 
