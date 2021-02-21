@@ -61,7 +61,7 @@ m1 <- glmer(survival ~ froh_long_std + froh_medium_std + froh_short_std  + sex +
              control = glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
 #mod_out <- tidy(mod, conf.int = TRUE, conf.method = "boot", nsim = 1000)
 tidy(m1, conf.int = TRUE)
-saveRDS(m1, "output/juv_survival_model_std.RDS")
+#saveRDS(m1, "output/juv_survival_model_std.RDS")
 summary(m1)
 tab_model(m1,show.r2 = FALSE, show.icc = FALSE, auto.label = TRUE, transform = NULL)
 
@@ -99,7 +99,7 @@ tidy(m3, conf.int = TRUE)
 
 
 
-# brm
+# brms
 juv_survival2 <- juv_survival %>% 
    mutate(froh_long = (froh_long-mean(froh_long)) * 100,
           froh_medium = (froh_medium-mean(froh_medium))*100,
