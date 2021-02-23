@@ -10,6 +10,11 @@ max(roh$cM)
 mean(roh$cM)
 
 roh %>% 
+   group_by(id) %>% 
+   tally() %>% 
+   summarise(mean(n), range(n))
+
+roh %>% 
       group_by(id) %>% 
       summarise(prop_roh = sum(cM)/ 3146) %>% 
       summarise(mean(prop_roh), range(prop_roh))
@@ -21,4 +26,6 @@ juv_survival <- fitness_data %>%
 juv_survival %>% 
    summarise(across(starts_with("froh_short"), list(mean = mean, sd = sd, min = min, max = max)))
 
+juv_survival %>% 
+   arrange(-froh_long)
              

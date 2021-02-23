@@ -7,33 +7,18 @@
 library(data.table)
 library(tidyverse)
 library(furrr)
-source("scripts/slim3alt_mut_and_roh.R")
 
-out_path <- "output/qm_slim/slim1000200_bot_7030del_newplink/"
+out_path <- "output/qm_slim/slim1000200_bot_7030del_newplink"
 file_names <- list.files(paste0(out_path, "/vcfs"), full.names = TRUE)
 
-correct_vcf <- function(vcf_file) {
-      # read meta data
-      meta <- readr::read_delim(vcf_file, delim = "\t", n_max = 5,
-                         col_names = FALSE)[[1]]
-      # read genotypes, data.table does this correctly
-      # i.e. jumping over the first 5 lines
-      gt <- data.table::fread(vcf_file, skip = 5)
-      # correct ref and alt columns
-      gt$REF <- 0
-      gt$ALT <- 1
-      # write out meta
-      readr::write_lines(meta, path = vcf_file)
-      # append genotypes to make file complete
-      fwrite(gt, file = vcf_file, append = TRUE,
-             col.names = TRUE, sep = "\t")
+rerun_plink <- function(vcf_file) {
       
       # now rerun ROH calling
       run_name <- stringr::str_split(vcf_file, "/") %>% 
-                        unlist() %>% 
-                        .[length(.)] %>% 
-                        str_remove(".vcf")
-            
+            unlist() %>% 
+            .[length(.)] %>% 
+            str_remove(".vcf")
+      
       system(paste0("plink --vcf ", vcf_file, " ",  # /usr/local/bin/plink
                     "--sheep --out ", out_path, "/roh/", run_name, " ",
                     "--homozyg --homozyg-window-snp 25 --homozyg-snp 25 --homozyg-kb 390 ",
@@ -44,8 +29,8 @@ correct_vcf <- function(vcf_file) {
 }
 
 # replace vcfs and re-run ROH calc
-plan(multiprocess, workers = 6)
-future_map(file_names, correct_vcf)
+plan(multiprocess, workers = 3)
+future_map(file_names, rerun_plink)
 
 # extract run names
 run_names <- stringr::str_split(file_names, "/") %>% 

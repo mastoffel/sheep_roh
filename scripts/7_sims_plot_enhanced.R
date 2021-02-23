@@ -7,7 +7,7 @@ source("../sheep_ID/theme_simple.R")
 library(vroom)
 library(colorspace)
 
-mut_df <- fread("output/qm_slim/slim1000200_bot_7030del/par_combs_popsize1_1000_popsize2_200.txt")
+mut_df <- fread("output/qm_slim/slim1000200_bot_7030del_newplink/par_combs_popsize1_1000_popsize2_200.txt")
 
 mut_all <- mut_df %>% 
       #sample_frac(0.001) %>% 

@@ -8,17 +8,17 @@ library(furrr)
 library(janitor)
 source("../sheep_ID/theme_simple.R")
 
-system(paste0("/usr/local/bin/plink --bfile data/sheep_geno_imputed_oar31_17052020_cM ",
-              "--sheep --out output/ROH/roh_cM ",
-              "--homozyg --homozyg-window-snp 30 --homozyg-snp 30 --homozyg-kb 390 ",
-              "--homozyg-gap 100 --homozyg-density 100 --homozyg-window-missing 2 ",
-              "--homozyg-het 1 ",
-              "--homozyg-window-het 1"))
+# system(paste0("/usr/local/bin/plink --bfile data/sheep_geno_imputed_oar31_17052020_cM ",
+#               "--sheep --out output/ROH/roh_cM ",
+#               "--homozyg --homozyg-window-snp 30 --homozyg-snp 30 --homozyg-kb 390 ",
+#               "--homozyg-gap 100 --homozyg-density 100 --homozyg-window-missing 2 ",
+#               "--homozyg-het 1 ",
+#               "--homozyg-window-het 1"))
 
 system(paste0("/usr/local/bin/plink --bfile data/sheep_geno_imputed_oar31_17052020_cM ",
               "--sheep --out output/ROH/roh_cM ",
-              "--homozyg --homozyg-window-snp 30 --homozyg-snp 30 --homozyg-kb 390 ",
-              "--homozyg-gap 300 --homozyg-density 100 --homozyg-window-missing 2 ",
+              "--homozyg --homozyg-window-snp 25 --homozyg-snp 25 --homozyg-kb 390 ",
+              "--homozyg-gap 250 --homozyg-density 100 --homozyg-window-missing 2 ",
               "--homozyg-het 2 ",
               "--homozyg-window-het 2"))
 

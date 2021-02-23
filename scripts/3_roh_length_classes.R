@@ -43,6 +43,7 @@ roh <- fread("output/ROH/roh_cM.hom") %>%
       mutate(cM = cM/1e3) 
 max(roh$cM)
 mean(roh$cM)
+
 # linkage map
 lmap <- read_delim("../sheep_ID/data/7_20200504_Full_Linkage_Map.txt", "\t") %>% 
       rename(snp = SNP.Name,
@@ -58,6 +59,7 @@ full_length_map <- lmap %>% group_by(chr) %>%
 # lmap %>% group_by(chr) %>% 
 #       summarise(max_per_chr = max(cMPosition.Male)) %>% 
 #       summarise(genetic_map_length = sum(max_per_chr))
+
 # ROH classes ------------------------------------------------------------------
 
 # expected ROH length using cM/Mb from Johnston et al (2016)
@@ -133,6 +135,13 @@ calc_froh_classes <- function(roh_crit, roh_lengths) {
             roh_crit == "long"   ~ expr(cM >= 12.5),
             roh_crit == "all" ~ expr(cM > 0)
       )
+      
+      # roh_filt <- dplyr::case_when(
+      #    roh_crit == "short"  ~ expr(cM < 0.78),
+      #    roh_crit == "medium" ~ expr((cM >= 0.78) & (cM < 6.25)),
+      #    roh_crit == "long"   ~ expr(cM >= 6.25),
+      #    roh_crit == "all" ~ expr(cM > 0)
+      # )
       
       roh_lengths %>%
             dplyr::group_by(id) %>%

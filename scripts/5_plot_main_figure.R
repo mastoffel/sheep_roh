@@ -137,7 +137,7 @@ p_sup <- post %>%
       axis.title.x = element_text(size = 12)
    ) +
    xlab(expression(Delta~log~odds~ratio~and~'95%'~CI)) # "log odds-ratio and 95% CI"
-
+p_sup
 ggsave("figs/Sup_fig1_bayes_diff.jpg", p_sup, width = 4, height = 2.7)
 
 

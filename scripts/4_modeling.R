@@ -39,7 +39,7 @@ juv_survival <- fitness_data %>%
              froh_medium_std = scale(froh_medium)) %>% 
       filter(age == 0)
 
-ggpairs(juv_survival, columns = 9:12)
+#ggpairs(juv_survival, columns = 9:12)
 
 # time saver function for modeling
 nlopt <- function(par, fn, lower, upper, control) {
@@ -54,23 +54,17 @@ nlopt <- function(par, fn, lower, upper, control) {
 }
 # froh_long + froh_short + 
 
-# lme4
-m1 <- glmer(survival ~ froh_long_std + froh_medium_std + froh_short_std  + sex + twin + (1|mum_id) + (1|birth_year), 
-             family = binomial, data = juv_survival,
-             #control = glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=100000)))
-             control = glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
-#mod_out <- tidy(mod, conf.int = TRUE, conf.method = "boot", nsim = 1000)
-tidy(m1, conf.int = TRUE)
-#saveRDS(m1, "output/juv_survival_model_std.RDS")
-summary(m1)
-tab_model(m1,show.r2 = FALSE, show.icc = FALSE, auto.label = TRUE, transform = NULL)
-
 
 # no std:
+# juv_survival2 <- juv_survival %>%
+#    mutate(froh_long = (froh_long-mean(froh_long)) * 100,
+#           froh_medium = (froh_medium-mean(froh_medium))*100,
+#           froh_short = (froh_short - mean(froh_short)) *100,
+#           froh_all = (froh_all * 100))
 juv_survival2 <- juv_survival %>% 
-   mutate(froh_long = (froh_long-mean(froh_long)) * 100,
-          froh_medium = (froh_medium-mean(froh_medium))*100,
-          froh_short = (froh_short - mean(froh_short)) *100,
+   mutate(froh_long = froh_long * 100,
+          froh_medium = froh_medium*100,
+          froh_short = froh_short *100,
           froh_all = (froh_all * 100))
 m2 <- glmer(survival ~ froh_long + froh_medium + froh_short + sex + twin + (1|mum_id) + (1|birth_year), 
             family = binomial, data = juv_survival2,
@@ -78,34 +72,18 @@ m2 <- glmer(survival ~ froh_long + froh_medium + froh_short + sex + twin + (1|mu
             control = glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
 #mod_out <- tidy(mod, conf.int = TRUE, conf.method = "boot", nsim = 1000)
 mod_tidy <- tidy(m2, conf.int = TRUE)
-# mod_tidy %>% 
-#    filter(str_detect(term, "froh")) %>% 
-#    #mutate(across(.cols = c("estimate", "conf.low", "conf.high"), exp)) %>% 
-#    ggplot(aes(estimate, term, xmax = conf.high, xmin = conf.low, color = term, fill = term)) +
-#    geom_vline(xintercept = 1, linetype='dashed', size = 0.3) +  #colour =  "#4c566a",   # "#4c566a"  "#eceff4"
-#    geom_errorbarh(alpha = 1, height = 0, size = 1) +
-#    geom_point(size = 3.5, shape = 21, #col = "#4c566a", #fill = "#eceff4", # "grey69"
-#               alpha = 1, stroke = 0.3)
+mod_tidy
 
 saveRDS(m2, "output/juv_survival_model_nonstd.RDS")
-
-
-m3 <- glmer(survival ~ froh_all + sex + twin + (1|mum_id) + (1|birth_year), 
-            family = binomial, data = juv_survival,
-            #control = glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=100000)))
-            control = glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
-tidy(m3, conf.int = TRUE)
-
 
 
 
 # brms
 juv_survival2 <- juv_survival %>% 
-   mutate(froh_long = (froh_long-mean(froh_long)) * 100,
-          froh_medium = (froh_medium-mean(froh_medium))*100,
-          froh_short = (froh_short - mean(froh_short)) *100,
+   mutate(froh_long = froh_long * 100,
+          froh_medium = froh_medium*100,
+          froh_short = froh_short *100,
           froh_all = (froh_all * 100))
-
 brm_fit <- brm(survival ~ froh_long + froh_medium + froh_short  + sex + twin + (1|mum_id) + (1|birth_year), 
                family = bernoulli(), data = juv_survival2, cores = 4, iter = 10000,
                set_prior("normal(0,5)", class = "b"))
