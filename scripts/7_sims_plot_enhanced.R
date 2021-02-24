@@ -7,7 +7,7 @@ source("../sheep_ID/theme_simple.R")
 library(vroom)
 library(colorspace)
 
-mut_df <- fread("output/qm_slim/slim1000200_bot_7030del_newplink/par_combs_popsize1_1000_popsize2_200.txt")
+mut_df <- fread("output/qm_slim/slim1000200_bot_7030del/par_combs_popsize1_1000_popsize2_200.txt")
 
 mut_all <- mut_df %>% 
       #sample_frac(0.001) %>% 
@@ -92,14 +92,8 @@ p_final
 
 ggsave(plot = p_final, filename = "figs/Fig2_gen4_32_7030.jpg", width = 8, height = 3)
 
-ggsave(plot = p_final, filename = "figs/Fig2_gen4_32_7030.jpg", width = 7, height = 4.5)
 
-ggsave(plot = p_final, filename = "figs/Fig2_gen4_32_7030_wlines.jpg", width = 7, height = 4.5)
-
-
-
-
-
+# check 
 mut_sub %>% 
    group_by(roh_class) %>% 
    summarise(mean = across(c(s_sum_per_MB, num_mut_per_MB), mean))
@@ -138,193 +132,16 @@ p
 
 
 
-
-
-
-
-
-
-# raincloud plot
-
-df_rect <-
-   tibble(
-      xmin = c(-Inf, 2.46, 3.27),
-      xmax = c(Inf, Inf, Inf),
-      ymin = c(3, 2, 1),
-      ymax = c(Inf, Inf, Inf)
-   )
-
-mut_sub_iqr <- 
-   mut_sub %>% 
-   group_by(roh_class) %>% 
-   mutate(median = median(s_sum_per_MB),
-          q25 = quantile(s_sum_per_MB, probs = .25),
-          q75 = quantile(s_sum_per_MB, probs = .75),
-          n = n(),
-          roh_class_num = as.numeric(roh_class))
-
-
-mut_sub
-ggplot(mut_sub_iqr, aes(s_sum_per_MB, roh_class_num - .2)) +
-   geom_linerange(
-      data = mut_sub_iqr %>% 
-         group_by(roh_class, roh_class_num) %>% 
-         summarize(m = unique(median)),
-      aes(
-         xmin = -Inf, 
-         xmax = m, 
-         y = roh_class_num,
-         color = roh_class
-      ),
-      inherit.aes = F,
-      linetype = "dotted",
-      size = .7
-   ) +
-   geom_boxplot(
-      aes(
-         color = roh_class,
-         color = after_scale(darken(color, .1, space = "HLS"))
-      ),
-      width = 0,
-      size = .9
-   ) +
-   geom_rect(
-      aes(
-         xmin = q25,
-         xmax = median,
-         ymin = roh_class_num - .05,
-         ymax = roh_class_num - .35
-      ),
-      fill = "grey89"
-   ) +
-   geom_rect(
-      aes(
-         xmin = q75,
-         xmax = median,
-         ymin = roh_class_num - .05,
-         ymax = roh_class_num - .35
-      ),
-      fill = "grey79"
-   ) +
-   geom_segment(
-      aes(
-         x = q25, 
-         xend = q25,
-         y = roh_class_num - .05,
-         yend = roh_class_num - .35,
-         color = roh_class,
-         color = after_scale(darken(color, .05, space = "HLS"))
-      ),
-      size = .25
-   ) +
-   geom_segment(
-      aes(
-         x = q75, 
-         xend = q75,
-         y = roh_class_num - .05,
-         yend = roh_class_num - .35,
-         color = roh_class,
-         color = after_scale(darken(color, .05, space = "HLS"))
-      ),
-      size = .25
-   ) +
-   geom_point(
-      aes(
-         color = roh_class
-      ), 
-      shape = "|",
-      size = 5,
-      alpha = .33
-   ) +
-   ggdist::stat_halfeye(
-      aes(
-         y = roh_class_num,
-         color = roh_class,
-         fill = after_scale(lighten(color, .5))
-      ),
-      shape = 18,
-      point_size = 3,
-      interval_size = 1.8,
-      adjust = .5,
-      .width = c(0, 1)
-   )
-   
-   
-
-   geom_point(
-      aes(
-         color = roh_class
-      ), 
-      shape = "|",
-      size = 5,
-      alpha = .33
-   ) +
-   ggdist::stat_slab(
-      aes(
-         y = roh_class - 0.2,
-         color = roh_class,
-         fill = after_scale(lighten(color, .5))
-      ),
-      size = 0.1,
-      shape = 18,
-      #point_size = 0.5,
-      #interval_size = 0.5,
-      adjust = .5,
-      .width = c(0, 1)
-   )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # how much is purged?
+
+# selection coefficient
 mut_sub %>% 
    group_by(roh_class) %>% 
    summarise(mean(s_sum_per_MB))
 
-
-
-make_plot2 <- function(ss, axis_title, df) {
-   ss <- ensym(ss)
-   ggplot(mut_sub, aes(roh_class, !!ss, fill = roh_class)) +
-      geom_line(mapping = aes(group = seed), size = 0.2, alpha = 0.1) +
-      geom_half_point(side = "r", shape = 21, alpha = 0.5, stroke = 0.1, size = 2) +
-      geom_half_boxplot(side = "l", outlier.color = NA,
-                        width = 0.5, lwd = 0.5, color = "black",
-                        alpha = 0.8, notch = TRUE) +
-      scale_fill_viridis_d("ROH length class", direction = -1,
-                           guide = guide_legend(reverse = TRUE),
-                           labels=rev(c("long (>6.25cM)", "medium (1.56cM - 6.25cM)", "short (<1.56cM)"))) +
-      #scale_x_discrete(labels = c(expression(ROH[long]),expression(ROH[medium]), expression(ROH[short]))) +
-      theme_simple(grid_lines = FALSE, axis_lines = TRUE,  base_size = 12) +
-     # ylab(axis_title) +
-      theme(
-         axis.line.y = element_blank(),
-         axis.ticks.y = element_blank(), 
-         axis.text.y = element_blank(),
-         axis.title.y = element_blank(),
-         #axis.title.x = element_blank(),
-         # panel.spacing = unit(2, "lines"),
-         axis.text = element_text(color = "black"),
-         legend.position = "right"
-      ) +
-      ylab(axis_title) +
-      coord_flip()
-}
-
-
-
-
-
+mut_sub %>% 
+   group_by(roh_class) %>% 
+   summarise(mean(num_mut_per_MB))
 
 # Supplementary plot with all s and h
 mut_sub2 <- mut_p %>%
@@ -333,10 +150,10 @@ mut_sub2 <- mut_p %>%
    rename(s = mut1_gam_mean,
           h = mut1_dom_coeff)
   # pivot_longer(cols = s_sum_per_MB:mean_freq, names_to = "feature")
-
+library(scales)
 make_plot2 <- function(ss, axis_title, df) {
    ss <- ensym(ss)
-   ggplot(mut_sub, aes(roh_class, !!ss, fill = roh_class)) +
+   ggplot(df, aes(roh_class, !!ss, fill = roh_class)) +
       #geom_boxploth() +
       geom_half_point(side = "r", shape = 21, alpha = 0.5, stroke = 0.1, size = 2) +
       geom_half_boxplot(side = "l", outlier.color = NA,
@@ -349,6 +166,7 @@ make_plot2 <- function(ss, axis_title, df) {
                            labels=rev(c("long (>12.5cM | < 4g)", 
                                         "medium (>1.56cM | 4-32g)", 
                                         "short (>0.39cM | 32-128g)"))) +
+      scale_y_continuous(breaks = pretty_breaks(n = 4)) +
       theme_simple(grid_lines = FALSE, axis_lines = TRUE,  base_size = 12) +
       ylab(axis_title) +
       theme(
@@ -357,6 +175,7 @@ make_plot2 <- function(ss, axis_title, df) {
          axis.text.y = element_blank(),
          axis.title.y = element_blank(),
          #axis.title.x = element_blank(),
+         axis.text.x = element_text(size = 8),
          panel.spacing = unit(2, "lines"),
          axis.text = element_text(color = "black"),
          legend.position = "right"

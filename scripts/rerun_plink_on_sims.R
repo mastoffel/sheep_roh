@@ -7,6 +7,7 @@
 library(data.table)
 library(tidyverse)
 library(furrr)
+source("scripts/combine_mut_roh.R")
 
 out_path <- "output/qm_slim/slim1000200_bot_7030del_newplink"
 file_names <- list.files(paste0(out_path, "/vcfs"), full.names = TRUE)
@@ -28,22 +29,17 @@ rerun_plink <- function(vcf_file) {
       
 }
 
+
+
+
 # replace vcfs and re-run ROH calc
-plan(multiprocess, workers = 3)
+plan(multiprocess, workers = 4)
 future_map(file_names, rerun_plink)
 
 # extract run names
 run_names <- stringr::str_split(file_names, "/") %>% 
       map_chr(5) %>% 
       str_remove(".vcf")
-
-# make a safe combine function
-source("scripts/combine_mut_roh.R")
-combine_safe <- safely(combine_mut_roh)
-
-#plan(multiprocess, workers = 4)
-# combine mutations and roh data and calculate length classes
-out <- future_map(run_names, combine_safe, out_path, roh_cutoff_small = 1560, roh_cutoff_long = 12500)
 
 # params
 mut1_dom_coeff <- c(0, 0.05, 0.2)
@@ -56,22 +52,30 @@ pop_size1 <- 1000
 pop_size2 <- 200
 params <- expand.grid(pop_size1, pop_size2, mut1_dom_coeff, mut1_gam_mean, mut1_gam_shape,
                       genome_size, mut_rate_del, recomb_rate) %>% 
-      setNames(c("pop_size1", "pop_size2", "mut1_dom_coeff", "mut1_gam_mean", "mut1_gam_shape",
-                 "genome_size", "mut_rate_del", "recomb_rate")) %>% 
-      as_tibble() %>% 
-      mutate(time1 = 10000,        #pop_size1 * 10,
-             time2 = time1 + 1000)
+   setNames(c("pop_size1", "pop_size2", "mut1_dom_coeff", "mut1_gam_mean", "mut1_gam_shape",
+              "genome_size", "mut_rate_del", "recomb_rate")) %>% 
+   as_tibble() %>% 
+   mutate(time1 = 10000,        #pop_size1 * 10,
+          time2 = time1 + 1000)
 
 # try 10 simulation with only weakly deleterious alleles
-num_sim_per_parset <- 100
+num_sim_per_parset <- 50
 set.seed(123)
 seeds <- sample(1:1e5, num_sim_per_parset * nrow(params))
 # replicate each parameter set num_sim_per_parset times
 params_sim <- params[rep(1:nrow(params), each =num_sim_per_parset), ] %>% 
-      mutate(seed = seeds)
+   mutate(seed = seeds)
 
-# extract only non-error runs and combine
-mut_df <- out %>% 
+# make a safe combine function
+combine_safe <- safely(combine_mut_roh)
+
+# combine mutation and roh 
+combine_in_pieces <- function(run_names, params_sim) {
+   
+   # combine mutations and roh data and calculate length classes
+   out <- future_map(run_names, combine_safe, out_path, roh_cutoff_small = 1560, roh_cutoff_long = 12500)
+   # extract only non-error runs and combine
+   mut_df <- out %>% 
       purrr::transpose() %>% 
       .[[1]] %>% 
       bind_rows() %>% 
@@ -79,11 +83,14 @@ mut_df <- out %>%
              seed = as.numeric(seed)) %>% 
       dplyr::arrange(id) %>% 
       left_join(params_sim, by = "seed")
-# complete(nesting(id, roh_class)) %>% 
-# arrange(id)
+   
+   #dir.create("slim_sim/sims/out", recursive = TRUE, showWarnings = TRUE)
+   write_delim(mut_df, paste0(out_path, "/out/par_combs_popsize1_", pop_size1,
+                              "_popsize2_", pop_size2, ".txt"), append = TRUE)
+   
+}
 
-#saveRDS(mut_df, file = "slim_sim/sims/out/sims_weakly_03.RData")
-
-#dir.create("slim_sim/sims/out", recursive = TRUE, showWarnings = TRUE)
-write_delim(mut_df, paste0(out_path, "/out/par_combs_popsize1_", pop_size1,
-                           "_popsize2_", pop_size2, ".txt"))
+# run 
+run_names_list <- split(run_names, ceiling(seq_along(run_names)/10))
+plan(multiprocess, workers = 5)
+walk(run_names_list, combine_in_pieces, params_sim)
