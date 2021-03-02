@@ -66,6 +66,7 @@ juv_survival2 <- juv_survival %>%
           froh_medium = froh_medium*100,
           froh_short = froh_short *100,
           froh_all = (froh_all * 100))
+
 m2 <- glmer(survival ~ froh_long + froh_medium + froh_short + sex + twin + (1|mum_id) + (1|birth_year), 
             family = binomial, data = juv_survival2,
             #control = glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=100000)))
@@ -76,7 +77,13 @@ mod_tidy
 
 saveRDS(m2, "output/juv_survival_model_nonstd.RDS")
 
-
+# jarrod suggestion
+# m3 <- glmer(survival ~ froh_all + mean_cM + sex + twin + (1|mum_id) + (1|birth_year), 
+#             family = binomial, data = juv_survival2,
+#             #control = glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=100000)))
+#             control = glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+# mod_tidy <- tidy(m3, conf.int = TRUE)
+# mod_tidy
 
 # brms
 juv_survival2 <- juv_survival %>% 
@@ -97,6 +104,15 @@ loo(brm_fit)
 pp_check(brm_fit, nsamples = 100 )
 summary(mod_brm)
 conditional_effectnsamples = s(mod_brm)
+
+
+# suggestion jarrod
+brm_fit2 <- brm(survival ~ froh_all + ROH_len_cM + sex + twin + (1|mum_id) + (1|birth_year), 
+               family = bernoulli(), data = juv_survival2, cores = 4, iter = 10000,
+               set_prior("normal(0,5)", class = "b"))
+summary(brm_fit2)
+saveRDS(brm_fit2, "output/juv_survival_model_nonstd_brm_roh_all_length.RDS")
+brm_fit2 <- readRDS("output/juv_survival_model_nonstd_brm_roh_all_length.RDS")
 
 check_model(brm_fit)
 

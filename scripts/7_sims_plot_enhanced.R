@@ -7,7 +7,7 @@ source("../sheep_ID/theme_simple.R")
 library(vroom)
 library(colorspace)
 
-mut_df <- fread("output/qm_slim/slim1000200_bot_7030del/par_combs_popsize1_1000_popsize2_200.txt")
+mut_df <- fread("output/qm_slim/slim1000200_bot_7030del_varyh/par_combs_popsize1_1000_popsize2_200.txt")
 
 mut_all <- mut_df %>% 
       #sample_frac(0.001) %>% 
@@ -40,6 +40,10 @@ mut_p <- mut_all %>%
       mutate(roh_class = factor(roh_class, levels = rev(c("long", "medium","short")))) %>% 
       ungroup()
 
+mut_sub <- mut_p %>%
+   filter(mut1_gam_mean == -0.03) %>% 
+   mutate(mean_origin = 11000 - mean_origin)
+
 # combine 
 mut_sub <- mut_p %>%
    filter(mut1_gam_mean == -0.03, mut1_dom_coeff == 0.05) %>% 
@@ -48,8 +52,8 @@ mut_sub <- mut_p %>%
 make_plot <- function(ss, axis_title, df) {
    ss <- ensym(ss)
    p <- ggplot(df, aes(roh_class, !!ss, fill = roh_class)) +
-     # geom_line(mapping = aes(group = seed), size = 0.2, alpha = 0.1,
-      #          color = "#4C566A") +
+     #geom_line(mapping = aes(group = seed), size = 0.2, alpha = 0.1,
+      #        color = "#4C566A") +
       geom_half_point(side = "r", shape = 21, alpha = 0.5, stroke = 0.1, 
                       size = 2,  width = 0.5) +
       geom_half_boxplot(side = "l", outlier.color = NA,
@@ -91,6 +95,25 @@ p_final <- p1 + p3 + p2 +
 p_final
 
 ggsave(plot = p_final, filename = "figs/Fig2_gen4_32_7030.jpg", width = 8, height = 3)
+
+
+
+
+
+# for presentation (with lines)
+p1 <- make_plot(s_sum_per_MB,"Selection coefficient per cM\n(mutation load)", mut_sub)  
+p2 <- make_plot(mean_freq,"Mean mutation frequency", mut_sub)  
+p3 <- make_plot(num_mut_per_MB, "Number of mutations per cM", mut_sub)
+#p4 <- make_plot(mean_origin,"Mutation age in generations", mut_sub)
+p_final <- p3 + p1 + p2 + 
+   #plot_annotation(tag_levels = 'a') +
+   plot_layout(guides = 'collect') & theme(legend.position = 'bottom') 
+
+p_final
+
+ggsave(plot = p1, filename = "figs/Fig2_gen4_32_7030_pres.jpg", width = 3, height = 2.8)
+
+
 
 
 # check 

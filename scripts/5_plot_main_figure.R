@@ -108,6 +108,7 @@ p_final
 ggsave("figs/Fig1_bayes.jpg", p_final, width = 7, height = 3)
 
 
+
 # figure of differences
 p_sup <- post %>% 
    mutate(d_long_medium = b_froh_long - b_froh_medium,
@@ -171,7 +172,8 @@ tidy_mod <- tidy(mod) %>%
                                  rep("Group level/random effects (standard deviation)", 2))) %>% 
                select(7, 1:6) %>% 
                mutate_if(is.numeric, function(x) paste0(round(x, 3)," (",round(exp(x), 3), ")")) %>% 
-               setNames(c("effect", "Term", "Post.Mean", "Std.Error", "CI (2.5%)", "CI (97.5%)", "Info"))
+               select(-std.error) %>% 
+               setNames(c("effect", "Term", "Post.Mean", "CI (2.5%)", "CI (97.5%)", "Info"))
                                     
 tidy_mod %>% gt(
    rowname_col = "term",
@@ -184,7 +186,40 @@ tidy_mod %>% gt(
    gtsave("JS_model_table.png", path = "tables/")
 
 
+# alternative model with FROH + mean_ROH_length
+mod2 <- readRDS("output/juv_survival_model_nonstd_brm_roh_all_length.RDS")
 
+# TABLE
+tidy_mod2 <- tidy(mod2) %>% 
+   select(term:conf.high) %>% 
+   mutate(term = c("Intercept", 
+                   "F<sub>ROH",
+                   "Mean ROH length (cM)",
+                   "Sex",
+                   "Twin",
+                   "Birth year",
+                   "Mother ID")) %>% 
+   mutate(add_info = c("", rep("continuous", 2), 
+                       "categorical (0=male, 1=female)",
+                       "categorical (0=singleton, 1=twin)",
+                       "n = 1118",
+                       "n = 39")) %>% 
+   mutate(effect = c("", rep("Population level/fixed effects", 4),
+                     rep("Group level/random effects (standard deviation)", 2))) %>% 
+   select(7, 1:6) %>% 
+   mutate_if(is.numeric, function(x) paste0(round(x, 3)," (",round(exp(x), 3), ")")) %>% 
+   select(-std.error) %>% 
+   setNames(c("effect", "Term", "Post.Mean", "CI (2.5%)", "CI (97.5%)", "Info"))
+
+tidy_mod2 %>% gt(
+   rowname_col = "term",
+   groupname_col = "effect") %>% 
+   tab_style(
+      style = cell_text( weight = "bold"),
+      locations = cells_column_labels(columns = TRUE)
+   ) %>% 
+   fmt_markdown(columns = TRUE) %>% 
+   gtsave("JS_model_table_alt_model.png", path = "tables/")
 
 
 

@@ -172,6 +172,12 @@ fitness_data <- annual_fitness %>%
       left_join(sample_qc)
 
 
+# get ROH length per
+roh_length <- roh %>% 
+               group_by(id) %>% 
+               summarise(ROH_len_cM = mean(cM)) %>% 
+               mutate(id = as.character(id))
+
 # make data.frame for analysis
 fitness_data <- fitness_data %>% 
       clean_names() %>% 
@@ -187,7 +193,8 @@ fitness_data <- fitness_data %>%
       filter(call_rate > 0.99) %>% 
       # na rows should be discarded
       mutate_at(c("id", "sheep_year", "birth_year", "sex",
-                  "mum_id", "twin"), as.factor)
+                  "mum_id", "twin"), as.factor) %>% 
+      left_join(roh_length)
 
 
 save(fitness_data, file = "data/fitness_roh.RData") # formerly fitness_roh_df

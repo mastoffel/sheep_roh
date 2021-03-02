@@ -91,6 +91,6 @@ combine_in_pieces <- function(run_names, params_sim) {
 }
 
 # run 
-run_names_list <- split(run_names, ceiling(seq_along(run_names)/10))
+run_names_list <- split(run_names, ceiling(seq_along(run_names)/30))
 plan(multiprocess, workers = 5)
 walk(run_names_list, combine_in_pieces, params_sim)
