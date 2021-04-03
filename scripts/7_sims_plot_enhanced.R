@@ -94,7 +94,7 @@ p_final <- p1 + p3 + p2 +
  
 p_final
 
-ggsave(plot = p_final, filename = "figs/Fig2_gen4_32_7030.jpg", width = 8, height = 3)
+ggsave(plot = p_final, filename = "figs/Fig2_gen4_32_7030_varyh.jpg", width = 8, height = 3)
 
 
 

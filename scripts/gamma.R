@@ -1,5 +1,13 @@
 library(ggplot2)
 source("../sheep_ID/theme_simple.R")
+library(simstudy)
+gammaGetShapeRate(0.03, 5)
+
+hist(rgamma(10000, 0.2, rate = 6.666), breaks = 100)
+
+muts <- rgamma(10000, 0.2, rate = 6.666)
+sum(muts > 0.001)
+
 dat <- data.frame(gamma = -rgamma(20000, 0.2, rate = 6.666))
 
 p1 <- ggplot(dat, aes(gamma)) +
