@@ -217,7 +217,16 @@ tidy_mod_imp %>% gt(
       fmt_markdown(columns = TRUE) %>% 
       gtsave("JS_model_table_froh_all_imputed.png", path = "tables/")
 
- 
+tidy_mod_ld %>% gt(
+      rowname_col = "term",
+      groupname_col = "effect") %>% 
+      tab_style(
+            style = cell_text( weight = "bold"),
+            locations = cells_column_labels(columns = TRUE)
+      ) %>% 
+      fmt_markdown(columns = TRUE) %>% 
+      gtsave("JS_model_table_froh_all_ld.png", path = "tables/")
+
 # lme4
 nlopt <- function(par, fn, lower, upper, control) {
       .nloptr <<- res <- nloptr(par, fn, lb = lower, ub = upper,
