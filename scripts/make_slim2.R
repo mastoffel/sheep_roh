@@ -118,6 +118,7 @@ make_slim <- function(genome_size = NULL, pop_size1 = NULL, pop_size2 = NULL,
       mutation(m1) {{
             mut.setValue("dom", runif(1, min = 0, max = 0.5));
 	    return T;
+      
       }}
       fitness(m1) {{
             if (homozygous)
@@ -127,6 +128,7 @@ make_slim <- function(genome_size = NULL, pop_size1 = NULL, pop_size2 = NULL,
       }}
       
       {time1} {{ p1.setSubpopulationSize({pop_size2}); }}
+      
       {time2} late() {{
       
       	// tree sequence recording for 

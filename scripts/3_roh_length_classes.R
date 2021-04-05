@@ -1,15 +1,14 @@
-# call ROH
 library(tidyverse)
 library(data.table)
 library(snpStats)
 library(GGally)
 library(gghalves)
 library(furrr)
-source("../sheep_ID/theme_simple.R")
+source("scripts/theme_simple.R")
 library(janitor)
 
 # Chr lengths
-chr_data <- read_delim("../sheep/data/sheep_genome/chromosome_info_oar31.txt", delim = "\t") %>% 
+chr_data <- read_delim("data/chromosome_info_oar31.txt", delim = "\t") %>% 
       rename(size_BP = Length,
              CHR = Part) %>% 
       mutate(size_KB = size_BP / 1000)
@@ -25,16 +24,16 @@ sample_qc <- read_delim("output/sample_qc.txt", delim = " ") %>%
 
 # fitness data
 # annual measures of traits and fitness
-fitness_path <- "../sheep/data/1_Annual_Fitness_Measures_April_20190501.txt"
+fitness_path <- "data/1_Annual_Fitness_Measures_April_20190501.txt"
 annual_fitness <- read_delim(fitness_path, delim = "\t") %>% clean_names()
 names(annual_fitness)
 
 # prepare, order pedigree
-sheep_ped <- read_delim("../sheep/data/SNP_chip/20190711_Soay_Pedigree.txt", 
-                        delim = "\t",
-                        col_types = "ccc") %>%
-      as.data.frame() %>%
-      MasterBayes::orderPed() 
+# sheep_ped <- read_delim("data/20190711_Soay_Pedigree.txt", 
+#                         delim = "\t",
+#                         col_types = "ccc") %>%
+#       as.data.frame() %>%
+#       MasterBayes::orderPed() 
 
 # roh
 roh <- fread("output/ROH/roh_cM.hom") %>%
@@ -43,8 +42,9 @@ roh <- fread("output/ROH/roh_cM.hom") %>%
       mutate(cM = cM/1e3) 
 max(roh$cM)
 mean(roh$cM)
+
 # linkage map
-lmap <- read_delim("../sheep_ID/data/7_20200504_Full_Linkage_Map.txt", "\t") %>% 
+lmap <- read_delim("data/7_20200504_Full_Linkage_Map.txt", "\t") %>% 
       rename(snp = SNP.Name,
              chr = Chr) %>% 
       select(chr, snp, cMPosition, cMPosition.Female, cMPosition.Male) %>% 
@@ -58,6 +58,7 @@ full_length_map <- lmap %>% group_by(chr) %>%
 # lmap %>% group_by(chr) %>% 
 #       summarise(max_per_chr = max(cMPosition.Male)) %>% 
 #       summarise(genetic_map_length = sum(max_per_chr))
+
 # ROH classes ------------------------------------------------------------------
 
 # expected ROH length using cM/Mb from Johnston et al (2016)
@@ -128,9 +129,9 @@ quantile(roh$cM, probs = c(0.25,0.5,0.75))
 calc_froh_classes <- function(roh_crit, roh_lengths) {
       
       roh_filt <- dplyr::case_when(
-            roh_crit == "short"  ~ expr(cM < 1.56),
-            roh_crit == "medium" ~ expr((cM >= 1.56) & (cM < 6.25)),
-            roh_crit == "long"   ~ expr(cM >= 6.25),
+            roh_crit == "short"  ~ expr(cM < 1.5625),
+            roh_crit == "medium" ~ expr((cM >= 1.5625) & (cM < 12.5)),
+            roh_crit == "long"   ~ expr(cM >= 12.5),
             roh_crit == "all" ~ expr(cM > 0)
       )
       
@@ -163,6 +164,12 @@ fitness_data <- annual_fitness %>%
       left_join(sample_qc)
 
 
+# get ROH length per
+roh_length <- roh %>% 
+               group_by(id) %>% 
+               summarise(ROH_len_cM = mean(cM)) %>% 
+               mutate(id = as.character(id))
+
 # make data.frame for analysis
 fitness_data <- fitness_data %>% 
       clean_names() %>% 
@@ -178,9 +185,10 @@ fitness_data <- fitness_data %>%
       filter(call_rate > 0.99) %>% 
       # na rows should be discarded
       mutate_at(c("id", "sheep_year", "birth_year", "sex",
-                  "mum_id", "twin"), as.factor)
+                  "mum_id", "twin"), as.factor) %>% 
+      left_join(roh_length)
 
 
-save(fitness_data, file = "data/fitness_roh.RData") # formerly fitness_roh_df
-save(sheep_ped, file = "data/sheep_ped.RData") # ordered ped
+save(fitness_data, file = "data/fitness_roh.RData") # 
+#save(sheep_ped, file = "data/sheep_ped.RData") # ordered ped
 

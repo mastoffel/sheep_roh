@@ -9,8 +9,8 @@ library(ggeffects)
 library(GGally)
 library(sjPlot)
 library(optiSel)
-load("data/fitness_roh2.RData") 
-load("data/sheep_ped.RData")
+load("data/fitness_roh.RData") 
+#load("data/sheep_ped.RData")
 ped <- sheep_ped
 
 # check for froh across years
@@ -39,7 +39,7 @@ juv_survival <- fitness_data %>%
              froh_medium_std = scale(froh_medium)) %>% 
       filter(age == 0)
 
-ggpairs(juv_survival, columns = 9:12)
+#ggpairs(juv_survival, columns = 9:12)
 
 # time saver function for modeling
 nlopt <- function(par, fn, lower, upper, control) {
@@ -54,50 +54,97 @@ nlopt <- function(par, fn, lower, upper, control) {
 }
 # froh_long + froh_short + 
 
-# lme4
-m1 <- glmer(survival ~ froh_long_std + froh_medium_std + froh_short_std  + sex + twin + (1|mum_id) + (1|birth_year), 
-             family = binomial, data = juv_survival,
-             #control = glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=100000)))
-             control = glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
-#mod_out <- tidy(mod, conf.int = TRUE, conf.method = "boot", nsim = 1000)
-tidy(m1, conf.int = TRUE)
-saveRDS(m1, "output/juv_survival_model_std.RDS")
-summary(m1)
-tab_model(m1,show.r2 = FALSE, show.icc = FALSE, auto.label = TRUE, transform = NULL)
-
-ggpredict(m1, c("froh_long_std [all]")) 
 
 # no std:
 juv_survival2 <- juv_survival %>% 
-   mutate(froh_long = froh_long*100,
+   mutate(froh_long = froh_long * 100,
           froh_medium = froh_medium*100,
-          froh_short = froh_short*100)
+          froh_short = froh_short *100,
+          froh_all = (froh_all * 100))
+
 m2 <- glmer(survival ~ froh_long + froh_medium + froh_short + sex + twin + (1|mum_id) + (1|birth_year), 
             family = binomial, data = juv_survival2,
-            #control = glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=100000)))
             control = glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
-#mod_out <- tidy(mod, conf.int = TRUE, conf.method = "boot", nsim = 1000)
 mod_tidy <- tidy(m2, conf.int = TRUE)
-mod_tidy %>% 
-   filter(str_detect(term, "froh")) %>% 
-   mutate(across(.cols = c("estimate", "conf.low", "conf.high"), exp)) %>% 
-   ggplot(aes(estimate, term, xmax = conf.high, xmin = conf.low, color = term, fill = term)) +
-   geom_vline(xintercept = 1, linetype='dashed', size = 0.3) +  #colour =  "#4c566a",   # "#4c566a"  "#eceff4"
-   geom_errorbarh(alpha = 1, height = 0, size = 1) +
-   geom_point(size = 3.5, shape = 21, #col = "#4c566a", #fill = "#eceff4", # "grey69"
-              alpha = 1, stroke = 0.3)
+mod_tidy
 
 saveRDS(m2, "output/juv_survival_model_nonstd.RDS")
 
-plot_model(m2, terms = c("froh_long", "froh_medium", "froh_short"))
+# jarrod suggestion
+# m3 <- glmer(survival ~ froh_all + mean_cM + sex + twin + (1|mum_id) + (1|birth_year), 
+#             family = binomial, data = juv_survival2,
+#             #control = glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=100000)))
+#             control = glmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+# mod_tidy <- tidy(m3, conf.int = TRUE)
+# mod_tidy
 
-# brm
-mod_brm <- brm(survival ~ froh_long + froh_medium + froh_short  + sex + twin + (1|mum_id) + (1|birth_year), 
-               family = bernoulli(), data = juv_survival2, cores = 4, iter = 2000)
+# brms
+juv_survival2 <- juv_survival %>% 
+   mutate(froh_long = froh_long * 100,
+          froh_medium = froh_medium*100,
+          froh_short = froh_short *100,
+          froh_all = (froh_all * 100))
+brm_fit <- brm(survival ~ froh_long + froh_medium + froh_short  + sex + twin + (1|mum_id) + (1|birth_year), 
+               family = bernoulli(), data = juv_survival2, cores = 4, iter = 10000,
+               set_prior("normal(0,5)", class = "b"))
 
-ggpredict(mod_brm, c("froh_long_std [all]")) 
-brms::conditional_effects(mod_brm)
-me <- brms::conditional_effects(mod_brm, "froh_long_std")
+saveRDS(brm_fit, "output/juv_survival_model_nonstd_brm.RDS")
+brm_fit <- readRDS("output/juv_survival_model_nonstd_brm.RDS")
+prior_summary(brm_fit)
+summary(brm_fit)
+plot(brm_fit, ask = FALSE)
+loo(brm_fit)
+pp_check(brm_fit, nsamples = 100 )
 summary(mod_brm)
-plot_model(mod_brm, terms = c("froh_long", "froh_medium", "froh_short"))
+conditional_effectnsamples = s(mod_brm)
 
+
+# suggestion jarrod
+brm_fit2 <- brm(survival ~ froh_all + ROH_len_cM + sex + twin + (1|mum_id) + (1|birth_year), 
+               family = bernoulli(), data = juv_survival2, cores = 4, iter = 10000,
+               set_prior("normal(0,5)", class = "b"))
+summary(brm_fit2)
+saveRDS(brm_fit2, "output/juv_survival_model_nonstd_brm_roh_all_length.RDS")
+brm_fit2 <- readRDS("output/juv_survival_model_nonstd_brm_roh_all_length.RDS")
+
+
+
+# trying out things here
+# 
+# plot(mod_brm)
+# ggpredict(mod_brm, c("froh_long_std [all]")) 
+# brms::conditional_effects(mod_brm)
+# me <- brms::conditional_effects(mod_brm, "froh_long_std")
+# summary(mod_brm)
+# plot_model(mod_brm, terms = c("froh_long", "froh_medium", "froh_short"))
+# 
+# library(tidybayes)
+# post1 <- posterior_samples(mod_brm, pars = c("froh_long" ,"froh_medium", "froh_short"))
+# post <- spread_draws(mod_brm, )
+# post1 %>% 
+#    ggplot(aes)
+# 
+# library(bayesplot)
+# mcmc_areas(post1, prob = 0.9)
+# 
+# library(brmstools)
+# forest(mod_brm, pars =  c("froh_long" ,"froh_medium", "froh_short"))
+# 
+# library(ggridges)
+# 
+# mod_brm_summary <- post1 %>% 
+#    pivot_longer(cols = starts_with("b"), names_to = "froh", values_to = "beta") %>% 
+#    group_by(froh) %>% 
+#    mutate(beta = exp(beta)) %>% 
+#    mean_qi(.width = c(.50, .90))
+# 
+# post1 %>% 
+#    pivot_longer(cols = starts_with("b"), names_to = "froh", values_to = "beta") %>% 
+#    mutate(beta = exp(beta)) %>% 
+#    ggplot(aes(beta, froh, fill = froh)) +
+#    geom_vline(xintercept = 1, color = "black", size = 1) +
+#    stat_halfeye() +
+#    scale_fill_viridis_d() +
+#    theme_minimal()
+# 
+# 

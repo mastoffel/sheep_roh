@@ -128,8 +128,8 @@ p_roh_dist
 calc_froh_classes <- function(roh_crit, roh_lengths) {
       
       roh_filt <- dplyr::case_when(
-            roh_crit == "short"  ~ expr(cM < 1.56),
-            roh_crit == "medium" ~ expr((cM >= 1.56) & (cM < 12.5)),
+            roh_crit == "short"  ~ expr(cM < 1.5625),
+            roh_crit == "medium" ~ expr((cM >= 1.5625) & (cM < 12.5)),
             roh_crit == "long"   ~ expr(cM >= 12.5),
             roh_crit == "all" ~ expr(cM > 0)
       )
@@ -162,7 +162,6 @@ fitness_data <- annual_fitness %>%
       left_join(froh, by = "id") %>% 
       left_join(sample_qc)
 
-
 # make data.frame for analysis
 fitness_data <- fitness_data %>% 
       clean_names() %>% 
@@ -181,5 +180,5 @@ fitness_data <- fitness_data %>%
                   "mum_id", "twin"), as.factor)
 
 
-save(fitness_data, file = "data/fitness_roh3.RData") # formerly fitness_roh_df
+save(fitness_data, file = "data/fitness_roh.RData") # formerly fitness_roh_df
 #save(sheep_ped, file = "data/sheep_ped.RData") # ordered ped
