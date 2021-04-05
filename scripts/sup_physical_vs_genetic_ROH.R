@@ -1,7 +1,7 @@
 library(tidyverse)
 library(data.table)
 library(patchwork)
-source("../sheep_ID/theme_simple.R")
+source("scripts/theme_simple.R")
 load("data/fitness_roh.RData") 
 
 # call physical map ROH
@@ -20,7 +20,7 @@ froh_cM <- fitness_data %>%
       rename_with(~paste0(., "_cM"), starts_with("froh"))
 
 # autosomal genome size
-chr_data <- read_delim("../sheep/data/sheep_genome/chromosome_info_oar31.txt", delim = "\t") %>% 
+chr_data <- read_delim("data/chromosome_info_oar31.txt", delim = "\t") %>% 
       rename(size_BP = Length,
              CHR = Part) %>% 
       mutate(size_KB = size_BP / 1000)

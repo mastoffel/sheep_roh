@@ -1,4 +1,5 @@
-library(lme4)
+# this is a simulation to see whther mixed models can estimate effects of 
+# correlated predictors.
 library(broom.mixed)
 library(tidyverse)
 # froh correlation

@@ -1,5 +1,7 @@
+# investigate mutation effects drawn from gamma distributions
+
 library(ggplot2)
-source("../sheep_ID/theme_simple.R")
+source("data/theme_simple.R")
 library(simstudy)
 gammaGetShapeRate(0.05, 5)
 gammaGetShapeRate(0.03, 5)

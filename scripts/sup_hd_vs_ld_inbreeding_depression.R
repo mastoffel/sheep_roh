@@ -17,7 +17,7 @@ map_file <- read_delim("data/Plates_1to87_QC3.map", delim = "\t",
 head(map_file)
 
 # linkage map from Johnston et al. (2020)
-lmap <- read_delim("../sheep_ID/data/7_20200504_Full_Linkage_Map.txt", "\t") %>% 
+lmap <- read_delim("data/7_20200504_Full_Linkage_Map.txt", "\t") %>% 
       rename(snp = SNP.Name,
              chr = Chr) %>% 
       select(chr, snp, cMPosition, cMPosition.Female, cMPosition.Male)
@@ -105,7 +105,7 @@ system(paste0("/usr/local/bin/plink --bfile data/Plates_1to87_QC3_cM ",
 ### calc FROH for LD ###########################################################
 
 # linkage map length
-lmap <- read_delim("../sheep_ID/data/7_20200504_Full_Linkage_Map.txt", "\t") %>% 
+lmap <- read_delim("data/7_20200504_Full_Linkage_Map.txt", "\t") %>% 
       rename(snp = SNP.Name,
              chr = Chr) %>% 
       select(chr, snp, cMPosition, cMPosition.Female, cMPosition.Male) %>% 

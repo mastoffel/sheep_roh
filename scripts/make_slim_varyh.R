@@ -1,4 +1,4 @@
-# makes a slim simulation file
+# makes a slim simulation file with varying dominance coefficients
 # original params genome_size = 1e8, pop_size1 = 5000, pop_size2 = 200, 
 #  time1 = 10000, time2 = 11000,  mut_rate_del = 1e-9, recomb_rate = 1.27e-8,
 #    mut1_gam_shape = 0.2,
