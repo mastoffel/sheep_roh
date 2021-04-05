@@ -1,15 +1,14 @@
-# call ROH
 library(tidyverse)
 library(data.table)
 library(snpStats)
 library(GGally)
 library(gghalves)
 library(furrr)
-source("../sheep_ID/theme_simple.R")
+source("scripts/theme_simple.R")
 library(janitor)
 
 # Chr lengths
-chr_data <- read_delim("../sheep/data/sheep_genome/chromosome_info_oar31.txt", delim = "\t") %>% 
+chr_data <- read_delim("data/chromosome_info_oar31.txt", delim = "\t") %>% 
       rename(size_BP = Length,
              CHR = Part) %>% 
       mutate(size_KB = size_BP / 1000)
@@ -25,16 +24,16 @@ sample_qc <- read_delim("output/sample_qc.txt", delim = " ") %>%
 
 # fitness data
 # annual measures of traits and fitness
-fitness_path <- "../sheep/data/1_Annual_Fitness_Measures_April_20190501.txt"
+fitness_path <- "data/1_Annual_Fitness_Measures_April_20190501.txt"
 annual_fitness <- read_delim(fitness_path, delim = "\t") %>% clean_names()
 names(annual_fitness)
 
 # prepare, order pedigree
-sheep_ped <- read_delim("../sheep/data/SNP_chip/20190711_Soay_Pedigree.txt", 
-                        delim = "\t",
-                        col_types = "ccc") %>%
-      as.data.frame() %>%
-      MasterBayes::orderPed() 
+# sheep_ped <- read_delim("data/20190711_Soay_Pedigree.txt", 
+#                         delim = "\t",
+#                         col_types = "ccc") %>%
+#       as.data.frame() %>%
+#       MasterBayes::orderPed() 
 
 # roh
 roh <- fread("output/ROH/roh_cM.hom") %>%
@@ -45,7 +44,7 @@ max(roh$cM)
 mean(roh$cM)
 
 # linkage map
-lmap <- read_delim("../sheep_ID/data/7_20200504_Full_Linkage_Map.txt", "\t") %>% 
+lmap <- read_delim("data/7_20200504_Full_Linkage_Map.txt", "\t") %>% 
       rename(snp = SNP.Name,
              chr = Chr) %>% 
       select(chr, snp, cMPosition, cMPosition.Female, cMPosition.Male) %>% 
@@ -136,13 +135,6 @@ calc_froh_classes <- function(roh_crit, roh_lengths) {
             roh_crit == "all" ~ expr(cM > 0)
       )
       
-      # roh_filt <- dplyr::case_when(
-      #    roh_crit == "short"  ~ expr(cM < 0.78),
-      #    roh_crit == "medium" ~ expr((cM >= 0.78) & (cM < 6.25)),
-      #    roh_crit == "long"   ~ expr(cM >= 6.25),
-      #    roh_crit == "all" ~ expr(cM > 0)
-      # )
-      
       roh_lengths %>%
             dplyr::group_by(id) %>%
             #filter({{ roh_filt }}) %>% 
@@ -197,6 +189,6 @@ fitness_data <- fitness_data %>%
       left_join(roh_length)
 
 
-save(fitness_data, file = "data/fitness_roh.RData") # formerly fitness_roh_df
-save(sheep_ped, file = "data/sheep_ped.RData") # ordered ped
+save(fitness_data, file = "data/fitness_roh.RData") # 
+#save(sheep_ped, file = "data/sheep_ped.RData") # ordered ped
 

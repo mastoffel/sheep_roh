@@ -7,7 +7,7 @@ library(gghalves)
 library(furrr)
 library(qtl)
 library(furrr)
-source("../sheep_ID/theme_simple.R")
+source("scripts/theme_simple.R")
 
 # make ped file to replace with genetic distances
 system(paste0("/usr/local/bin/plink --bfile data/sheep_geno_imputed_oar31_17052020 ",
@@ -21,7 +21,7 @@ map_file <- read_delim("data/sheep_geno_imputed_oar31_17052020.map", delim = "\t
 head(map_file)
 
 # linkage map from Johnston et al. (2020)
-lmap <- read_delim("../sheep_ID/data/7_20200504_Full_Linkage_Map.txt", "\t") %>% 
+lmap <- read_delim("data/7_20200504_Full_Linkage_Map.txt", "\t") %>% 
       rename(snp = SNP.Name,
              chr = Chr) %>% 
       select(chr, snp, cMPosition, cMPosition.Female, cMPosition.Male)
@@ -99,15 +99,15 @@ write_delim(map_cM_sex_av_int, file = "data/sheep_geno_imputed_oar31_17052020_cM
 
 print(map_cM_sex_av, n = 100)
 
-# compare to Jon's interpolation \ looks arlight
-map_js <- read_delim("~/Downloads/Oar3.1_Interpolated.txt", delim = "\t") %>% 
-            setNames(c("chr", "snp", "bp", "cM"))
-map_cM_sex_av %>% 
-   select(-bp,-cM) %>% 
-   left_join(map_js) %>% 
-   ggplot(aes(cMPosition, cM)) +
-      geom_point() +
-      facet_wrap(~chr)
+# compare to Jon's interpolation \ looks alight
+# map_js <- read_delim("~/Downloads/Oar3.1_Interpolated.txt", delim = "\t") %>% 
+#             setNames(c("chr", "snp", "bp", "cM"))
+# map_cM_sex_av %>% 
+#    select(-bp,-cM) %>% 
+#    left_join(map_js) %>% 
+#    ggplot(aes(cMPosition, cM)) +
+#       geom_point() +
+#       facet_wrap(~chr)
 
 
 # convert to bed

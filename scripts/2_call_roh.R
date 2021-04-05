@@ -6,14 +6,7 @@ library(GGally)
 library(gghalves)
 library(furrr)
 library(janitor)
-source("../sheep_ID/theme_simple.R")
-
-# system(paste0("/usr/local/bin/plink --bfile data/sheep_geno_imputed_oar31_17052020_cM ",
-#               "--sheep --out output/ROH/roh_cM ",
-#               "--homozyg --homozyg-window-snp 30 --homozyg-snp 30 --homozyg-kb 390 ",
-#               "--homozyg-gap 100 --homozyg-density 100 --homozyg-window-missing 2 ",
-#               "--homozyg-het 1 ",
-#               "--homozyg-window-het 1"))
+source("scripts/theme_simple.R")
 
 system(paste0("/usr/local/bin/plink --bfile data/sheep_geno_imputed_oar31_17052020_cM ",
               "--sheep --out output/ROH/roh_cM ",
@@ -29,7 +22,7 @@ hist(roh$KB, breaks = 1000)
 #roh %>% group_by(IID) %>% summarise(prop_ibd = sum(KB / 3146000)) %>% summarise(mean(prop_ibd))
 
 # individual qc  ---------------------------------------------------------------
-sheep_plink_name <- "../sheep/data/SNP_chip/oar31_mapping/sheep_geno_imputed_oar31_17052020"
+sheep_plink_name <- "data/sheep_geno_imputed_oar31_17052020"
 # read merged plink data
 sheep_bed <- paste0(sheep_plink_name, ".bed")
 sheep_bim <- paste0(sheep_plink_name, ".bim")
