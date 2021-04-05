@@ -26,7 +26,9 @@ This repository contains the analysis code for our paper under scripts/
 The script sources three other scripts at the beginning (make sure the paths are correct here):
 
 **make_slim.R:**: Makes a slim simulation file from parameters.
+
 **combine_mut_roh.R:** Combines mutation and ROH data.
+
 **correct_vcf.R:** Modifies vcf's outputted by SLiM to always work with PLINK. 
 
 Feel free to drop me an email if you've got any questions about the code.
