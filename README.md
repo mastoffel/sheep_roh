@@ -13,7 +13,7 @@ This repository contains the analysis code for our paper under scripts/. For a s
 
 **4_modeling:** Mixed models to estimate inbreeding depression per ROH length class.
 
-**5_plot_main_figure:** Formatting and plotting of the modeling results and Figure 1.
+**5_plot_model:** Formatting and plotting of the modeling results and Figure 1.
 
 **6_plot_simulations:** Plotting SLiM simulations (requires to run SLiM simulations first, see below)
 
