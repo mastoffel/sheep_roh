@@ -63,7 +63,7 @@ recap = ts.recapitate(recombination_rate=1e-8, Ne=pop_size, random_seed=np.rando
 # recap_simp = recap.simplify(keep_nodes)
 
 # add mutations. Also wrap in SlimTreeSequence so that pyslim can still work with it.
-mutated = pyslim.SlimTreeSequence(msprime.mutate(recap, rate=1e-8, 
+mutated = pyslim.SlimTreeSequence(msprime.mutate(recap, rate=3e-9, 
                                   random_seed=np.random.randint(1,100000000), 
                                   keep=True))
 # print(f"The tree sequence now has {mutated.num_mutations} mutations, "

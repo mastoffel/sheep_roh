@@ -70,7 +70,7 @@ combine_mut_roh <- function(run_name, out_path, roh_cutoff_small = 1221, roh_cut
             pivot_wider(names_from = roh_class, values_from = sum_kb) %>% 
             dplyr::rename(ind_id = IID) %>% 
             replace_na(list(long = 0, medium = 0, short = 0)) %>% 
-            mutate(outside_roh = 1e5 - long - medium - short) %>% 
+            mutate(outside_roh = 3e5 - long - medium - short) %>% 
            # mutate(ind_id = str_replace(ind_id, "indv", "")) %>% 
             pivot_longer(names_to = "roh_class", values_to = "roh_class_genome_cov",
                          cols = -ind_id) # cols = long:outside_roh 
