@@ -73,7 +73,7 @@ B <- mut_all %>%
    mutate(roh_class = factor(roh_class, levels = rev(c("long", "medium","short")))) %>% 
    ungroup()
 
-ggplot(mean_fit, aes(roh_class, mean_load, fill = roh_class)) +
+ggplot(mean_fit, aes(roh_class, mean_load), fill = roh_class) +
       #geom_line(mapping = aes(group = seed), size = 0.2, alpha = 0.1,
       #        color = "#4C566A") +
       geom_half_point(side = "r", shape = 21, alpha = 0.5, stroke = 0.1, 
