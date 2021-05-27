@@ -4,7 +4,7 @@ library(ggplot2)
 library(gghalves)
 library(data.table)
 library(patchwork)
-source("../sheep_ID/theme_simple.R")
+source("scripts/theme_simple.R")
 library(vroom)
 library(colorspace)
 
@@ -65,7 +65,7 @@ make_plot <- function(ss, axis_title, df) {
                          labels=rev(c("long (>12.5cM | < 4g)", 
                                       "medium (1.56cM-12.5cM | 4-32g)", 
                                       "short (0.39cM-1.56cM | 32-128g)"))) +
-      #scale_y_continuous(breaks = seq(from = 0.02, to = 0.032, by = 0.004)) +
+      scale_y_continuous(breaks = seq(from = 0.02, to = 0.032, by = 0.004)) +
      # scale_fill_manual("ROH length class", values = c("#D9B08C","#116466","#2C3531"),
      #                      guide = guide_legend(reverse = TRUE),
      #                      labels=rev(c("long (>12.5cM | < 4g)", "medium (>1.56cM | < 32g)", "short (>0.39cM | <128g)"))) +
@@ -97,6 +97,7 @@ p_final <- p1 + p3 + p2 +
 p_final
 
 ggsave(plot = p_final, filename = "figs/Fig2_gen4_32_7030.jpg", width = 8, height = 3)
+ggsave(plot = p_final, filename = "figs/Fig2_gen4_32_7030.pdf", width = 8, height = 3, device = cairo_pdf)
 
  
 # stats

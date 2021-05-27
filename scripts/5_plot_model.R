@@ -1,6 +1,6 @@
 library(tidyverse)
 library(broom.mixed)
-source("../sheep_ID/theme_simple.R")
+source("scripts/theme_simple.R")
 library(gghalves)
 library(janitor)
 library(sjPlot)
@@ -106,6 +106,7 @@ p_final <- p_dist + p_emp + plot_annotation(tag_levels = "a") +
 p_final
 
 ggsave("figs/Fig1_bayes.jpg", p_final, width = 7, height = 3)
+ggsave("figs/Fig1_bayes.pdf", p_final, width = 7, height = 3, device = cairo_pdf)
 
 
 

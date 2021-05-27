@@ -1,6 +1,7 @@
-### Mutation load decreases with haplotype age in wild Soay sheep
-Stoffel, M.A, Johnston, S.E., Pilkington, J.G., Pemberton, J.M  
-*bioRxiv* [https://doi.org/10.1101/2021.03.04.433700](https://doi.org/10.1101/2021.03.04.433700)  
+# Mutation load decreases with haplotype age in wild Soay sheep
+
+### Article
+Stoffel, M. A., Johnston, S. E., Pilkington, J. G., & Pemberton, J. M. (2021). Mutation load decreases with haplotype age in wild Soay sheep. *Evolution Letters.* https://doi.org/10.1002/evl3.229
 
 ### Overview
 This repository contains the analysis code for our paper under scripts/. For a smooth process, create a directory with sub-directories scripts/ data/ output/ figs/ tables/ . Put all the data associated with the paper (will be uploaded to Zenodo once accepted) in the data folder, so that the relative filepaths work correctly. These are the main scripts:
