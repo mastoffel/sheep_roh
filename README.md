@@ -9,7 +9,7 @@ Stoffel, MA, Johnston, SE, Pilkington, JG, Pemberton, JM (2021): **Mutation load
 </br>
 
 ### Project
-Runs of homozygosity (ROH) are regions in the genome where individuals inherited two copies of the same ancestral haplotype, and cause an increase in expressed deleterious recessive alleles. It has been suggested that longer ROH have a higher density of damaging mutations, as they are made up of younger haplotypes relatively untouched by selection. We used both empirical analyses in a large sample of wild Soay sheep and detailed forward genetic simulations showing that long ROH are more likely to harbour more and stronger deleterious mutations.
+Runs of homozygosity (ROH) are regions in the genome where individuals inherited two copies of the same ancestral haplotype. This can cause an increase in expressed deleterious recessive mutations, leading to reduced fitness. It has been suggested that longer ROH have a higher density of damaging mutations, as they are made up of younger haplotypes which are relatively untouched by selection. We used both empirical analyses in a large sample of wild Soay sheep and detailed forward genetic simulations to show that long ROH are more likely to harbour more and stronger deleterious mutations.
 
 </br>
 
