@@ -1,9 +1,26 @@
-# Mutation load decreases with haplotype age in wild Soay sheep
+# Code for:
 
-### Article
-Stoffel, M. A., Johnston, S. E., Pilkington, J. G., & Pemberton, J. M. (2021). Mutation load decreases with haplotype age in wild Soay sheep. *Evolution Letters.* https://doi.org/10.1002/evl3.229
+Stoffel, MA, Johnston, SE, Pilkington, JG, Pemberton, JM (2021): **Mutation load decreases with haplotype age in wild Soay sheep.**  *Evolution Letters.* https://doi.org/10.1002/evl3.229.  
 
-### Overview
+</br>
+
+![](pics/IMG_3281.jpg)
+
+</br>
+
+### Project
+Runs of homozygosity (ROH) are regions in the genome where individuals inherited two copies of the same ancestral haplotype, and cause an increase in expressed deleterious recessive alleles. It has been suggested that longer ROH have a higher density of damaging mutations, as they are made up of younger haplotypes relatively untouched by selection. We used both empirical analyses in a large sample of wild Soay sheep and detailed forward genetic simulations showing that long ROH are more likely to harbour more and stronger deleterious mutations.
+
+</br>
+
+<p align="center">
+  <img width="70%" src="figs/Fig2_gen4_32_7030.jpg">
+</p>
+<p align="center" > <i> Long runs of homozygosity (ROH) are enriched for deleterious mutations in genetic simulations.</i></p>
+
+</br>
+
+### Code structure
 This repository contains the analysis code for our paper under scripts/. For a smooth process, create a directory with sub-directories scripts/ data/ output/ figs/ tables/ . Put all the data associated with the paper (will be uploaded to Zenodo once accepted) in the data folder, so that the relative filepaths work correctly. These are the main scripts:
 
 **1_make_cM_map_files:** Converts physical position PLINK .map file to cM positions, and uses interpolation to infer cM position for SNPs which are not part of the linkage map.
@@ -18,7 +35,7 @@ This repository contains the analysis code for our paper under scripts/. For a s
 
 **6_plot_simulations:** Plotting SLiM simulations (requires to run SLiM simulations first, see below)
 
- ### SLiM simulations
+### SLiM simulations
  
  The SLiM simulations should be run on a cluster and require SLiM, python3 and the python packages PySlim, msprime and numpy to be installed. Also, users might have to adjust the python3 / slim paths in the scripts.
  
